@@ -2,8 +2,6 @@ package provider
 
 import (
 	"context"
-	// "io"
-	// "net/http"
 
 	"github.com/open-feature/go-sdk/openfeature"
 )
@@ -17,15 +15,6 @@ func (MDUProviderImpl) BooleanEvaluation(ctx context.Context, flag string, defau
 	return openfeature.BoolResolutionDetail{Value: BoolFlagValues[flag].FlagValue}
 }
 func (MDUProviderImpl) StringEvaluation(ctx context.Context, flag string, defaultValue string, evalCtx openfeature.FlattenedContext) openfeature.StringResolutionDetail {
-	// url := "http://127.0.0.1:23456/get_string_value"
-	// client := &http.Client{}
-	// resp, err := client.Get(url)
-	// if err != nil {
-	// 	return openfeature.StringResolutionDetail{Value: "goodbye, world"}
-	// }
-	// defer resp.Body.Close()
-	// body, _ := io.ReadAll(resp.Body)
-	// FlagValues["dataplane_generation"] = StringFlagValue{FlagKey: "dataplane_generation", FlagValue: "metal.v1"}
 	return openfeature.StringResolutionDetail{Value: StringFlagValues[flag].FlagValue}
 }
 func (MDUProviderImpl) FloatEvaluation(ctx context.Context, flag string, defaultValue float64, evalCtx openfeature.FlattenedContext) openfeature.FloatResolutionDetail {
