@@ -123,3 +123,37 @@ func SetFlagValue(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(responseJson))
 }
+
+func SetFlagVariationValue(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, fmt.Sprintf("%s not allowed", r.Method), http.StatusBadRequest)
+		return
+	}
+	// define custom type
+	type Input struct {
+		VariationUUID  string `json:"variationUUID"`
+		VariationValue string `json:"value"`
+	}
+	var input Input
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	flagVariation, err := database.UpdateFlagVariationValue(input.VariationUUID, input.VariationValue)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	responseJson, err := json.Marshal(flagVariation)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(responseJson))
+}

@@ -19,6 +19,7 @@ func main() {
 	http.HandleFunc("/getFlag/{flagKey}", handlers.GetFlag)
 	http.HandleFunc("/getFlagVariations/{flagKey}", handlers.GetVariations)
 	http.HandleFunc("/setFlagValue/{flagKey}", handlers.SetFlagValue)
+	http.HandleFunc("/setFlagVariationValue", handlers.SetFlagVariationValue)
 
 	http.HandleFunc("/getAllFlags", handlers.GetFlags)
 

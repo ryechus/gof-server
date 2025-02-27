@@ -107,3 +107,21 @@ func GetCurrentFlagVariation(flagKey string) (*FlagKeyStringVariations, error) {
 
 	return &active_variation, nil
 }
+
+func UpdateFlagVariationValue(flagVariationUUID string, flagVariationValue string) (*FlagKeyStringVariations, error) {
+	db := GetDB()
+
+	var existing_variation FlagKeyStringVariations
+
+	result := db.First(&existing_variation, "uuid = ?", flagVariationUUID)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	existing_variation.Value = flagVariationValue
+	result = db.Save(&existing_variation)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &existing_variation, nil
+}
