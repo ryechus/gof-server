@@ -55,6 +55,22 @@ func GetFlag(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(responseJson))
 }
 
+func GetFlags(w http.ResponseWriter, r *http.Request) {
+	flagVariations, err := database.GetFlags()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	responseJson, err := json.Marshal(flagVariations)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(responseJson))
+}
+
 func GetVariations(w http.ResponseWriter, r *http.Request) {
 	flagKeyPathValue := r.PathValue("flagKey")
 	flagVariations, err := database.GetVariations(flagKeyPathValue)

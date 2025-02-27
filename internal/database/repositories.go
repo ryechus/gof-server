@@ -19,6 +19,18 @@ func GetFlag(flagKey string) (*FlagKey, error) {
 	return &existing_flag, nil
 }
 
+func GetFlags() (*[]FlagKey, error) {
+	db := GetDB()
+	var existing_flags []FlagKey
+
+	result := db.Find(&existing_flags)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &existing_flags, nil
+}
+
 func GetVariations(flagKey string) (*[]FlagKeyStringVariations, error) {
 	db := GetDB()
 	existing_flag, err := GetFlag(flagKey)

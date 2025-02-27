@@ -20,6 +20,8 @@ func main() {
 	http.HandleFunc("/getFlagVariations/{flagKey}", handlers.GetVariations)
 	http.HandleFunc("/setFlagValue/{flagKey}", handlers.SetFlagValue)
 
+	http.HandleFunc("/getAllFlags", handlers.GetFlags)
+
 	fmt.Println("Server is running on http://localhost:23456")
 	log.Fatal(http.ListenAndServe(":23456", nil))
 }
