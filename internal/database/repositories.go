@@ -7,6 +7,34 @@ import (
 	"github.com/google/uuid"
 )
 
+func GetFlag(flagKey string) (*FlagKey, error) {
+	db := GetDB()
+	var existing_flag FlagKey
+
+	result := db.First(&existing_flag, "key = ?", flagKey)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &existing_flag, nil
+}
+
+func GetVariations(flagKey string) (*[]FlagKeyStringVariations, error) {
+	db := GetDB()
+	existing_flag, err := GetFlag(flagKey)
+	if err != nil {
+		return nil, err
+	}
+	var existing_variations []FlagKeyStringVariations
+
+	result := db.Where("flag_key_uuid = ?", existing_flag.UUID).Find(&existing_variations)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &existing_variations, nil
+}
+
 func GetOrCreateFlag(flagKey string) *FlagKey {
 	db := GetDB()
 	var existing_flag FlagKey
@@ -32,6 +60,9 @@ func SetCurrentFlagVariation(flagKey string, activeVariationUUID string) (*FlagK
 	db := GetDB()
 	now := time.Now()
 	existing_flag := GetOrCreateFlag(flagKey)
+	if activeVariationUUID == existing_flag.ActiveVariation {
+		return existing_flag, nil
+	}
 
 	var existing_variation FlagKeyStringVariations
 	result := db.First(&existing_variation, "uuid = ? AND flag_key_uuid = ?", activeVariationUUID, existing_flag.UUID)

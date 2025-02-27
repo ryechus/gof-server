@@ -16,6 +16,8 @@ func main() {
 	http.HandleFunc("/int/{flagKey}", handlers.IntFlagHandler)
 	http.HandleFunc("/bool/{flagKey}", handlers.BoolFlagHandler)
 
+	http.HandleFunc("/getFlag/{flagKey}", handlers.GetFlag)
+	http.HandleFunc("/getFlagVariations/{flagKey}", handlers.GetVariations)
 	http.HandleFunc("/setFlagValue/{flagKey}", handlers.SetFlagValue)
 
 	fmt.Println("Server is running on http://localhost:23456")
