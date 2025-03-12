@@ -64,26 +64,32 @@ func TestEndpoints(t *testing.T) {
 	type ex struct {
 		name           string
 		endpoint       string
-		flagName       string
 		expectedResult any
 	}
 	examples := []ex{
-		// {
-		// 	name:           "valid string lookup",
-		// 	endpoint:       "/string",
-		// 	flagName:       "fakeString",
-		// 	expectedResult: "expectedString",
-		// },
-		// {
-		// 	name:           "valid float lookup",
-		// 	endpoint:       "/float",
-		// 	flagName:       "fakeFloat",
-		// 	expectedResult: 1234.0,
-		// },
+		{
+			name:           "valid bool lookup",
+			endpoint:       "/bool/grant_soil_access",
+			expectedResult: false,
+		},
+		{
+			name:           "valid string lookup",
+			endpoint:       "/string/dataplane_generation",
+			expectedResult: "metal.v1",
+		},
+		{
+			name:           "valid float lookup",
+			endpoint:       "/float/special_ability_buff_perc",
+			expectedResult: 0.23456,
+		},
+		{
+			name:           "valid int lookup",
+			endpoint:       "/int/num_of_special_abilities",
+			expectedResult: 12,
+		},
 		{
 			name:           "ping works",
 			endpoint:       "/ping",
-			flagName:       "fakeFloat",
 			expectedResult: "pong",
 		},
 	}
@@ -110,10 +116,10 @@ func TestEndpoints(t *testing.T) {
 			switch actual := respValue.Value.(type) {
 			case string:
 				assert.Equal(t, actual, ex.expectedResult.(string))
-			case float64:
-				assert.Equal(t, actual, ex.expectedResult.(float64))
 			case int64:
 				assert.Equal(t, actual, ex.expectedResult.(int64))
+			case float64:
+				assert.Equal(t, actual, ex.expectedResult.(float64))
 			case bool:
 				assert.Equal(t, actual, ex.expectedResult.(bool))
 			default:

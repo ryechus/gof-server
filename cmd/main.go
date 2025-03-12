@@ -10,13 +10,18 @@ import (
 	"github.com/google/uuid"
 	"github.com/placer14/gof-server/internal/database"
 	"github.com/placer14/gof-server/internal/handlers"
+	"github.com/placer14/gof-server/internal/provider"
 	"gorm.io/gorm"
 )
 
 func main() {
+	provider.PopulateFlagValues()
 	// db := database.GetDB()
 	http.HandleFunc("/ping", handlers.HandlePing)
-	// http.HandleFunc("/get_string_value", getStringValue(db))
+	http.HandleFunc("/string/{flagKey}", handlers.GetStringValue)
+	http.HandleFunc("/float/{flagKey}", handlers.GetFloatValue)
+	http.HandleFunc("/int/{flagKey}", handlers.GetIntValue)
+	http.HandleFunc("/bool/{flagKey}", handlers.GetBoolValue)
 	// http.HandleFunc("/set_flag_value", setFlagValue(db))
 
 	fmt.Println("Server is running on http://localhost:23456")

@@ -11,9 +11,6 @@ func HandlePing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type responseType struct {
-		Value string `json:"value"`
-	}
 	responseJson, err := json.Marshal(responseType{Value: "pong"})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
