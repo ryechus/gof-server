@@ -66,6 +66,7 @@ func TestEndpoints(t *testing.T) {
 		endpoint       string
 		expectedResult any
 	}
+
 	examples := []ex{
 		{
 			name:           "valid bool lookup",
@@ -85,7 +86,7 @@ func TestEndpoints(t *testing.T) {
 		{
 			name:           "valid int lookup",
 			endpoint:       "/int/num_of_special_abilities",
-			expectedResult: 12,
+			expectedResult: float64(12), // json.Unmarshal is turning the int into a float64. why?
 		},
 		{
 			name:           "ping works",
