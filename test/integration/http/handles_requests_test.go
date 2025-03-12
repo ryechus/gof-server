@@ -56,11 +56,6 @@ func TestEndpoints(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// endpoint
-	// body input
-	// response output
-	// http status
-
 	type ex struct {
 		name           string
 		endpoint       string
@@ -126,8 +121,6 @@ func TestEndpoints(t *testing.T) {
 			default:
 				t.Error("unexpected type")
 			}
-
-			// assert.Equal(t, "pong", string(body))
 		})
 	}
 }
