@@ -7,79 +7,73 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/placer14/gof-server/internal/provider"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestStringEvaluation(t *testing.T) {
-	mock := provider.NewProviderMock()
-	assert.NoError(t, openfeature.SetProvider(mock))
+	m := provider.NewProviderMock()
+	assert.NoError(t, openfeature.SetProvider(m))
 
-	mockImpl, ok := mock.(*provider.MDUProviderMock)
-	require.True(t, ok)
-
+	flagKey := "dataplane-generation"
 	expectedStr := "metal.v1"
-	mockImpl.SetString("dataplane_generation", expectedStr)
+	m.SetString(flagKey, expectedStr)
 
 	evalCtx := openfeature.NewEvaluationContext("", map[string]any{})
 	client := openfeature.NewClient("stringEvalTests")
-	generation, err := client.StringValue(context.Background(), "dataplane_generation", "k8s.v1", evalCtx)
+	generation, err := client.StringValue(context.Background(), flagKey, "k8s.v1", evalCtx)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedStr, generation)
 }
 
 func TestBoolEvaluation(t *testing.T) {
-	mock := provider.NewProviderMock()
-	assert.NoError(t, openfeature.SetProvider(mock))
+	m := provider.NewProviderMock()
+	flagKey := "grant-soil-access"
 
-	mockImpl, ok := mock.(*provider.MDUProviderMock)
-	assert.True(t, ok)
-
-	err := openfeature.SetProvider(mock)
+	err := openfeature.SetProvider(m)
 	assert.NoError(t, err)
 
-	expectedStr := "metal.v1"
-	mockImpl.SetString("dataplane_generation", expectedStr)
+	value := true
+	m.SetBool(flagKey, value)
 
 	evalCtx := openfeature.NewEvaluationContext("", map[string]any{})
 	client := openfeature.NewClient("boolEvalTests")
 
-	generation, err := client.BooleanValue(context.Background(), "grant_soil_access", true, evalCtx)
+	generation, err := client.BooleanValue(context.Background(), flagKey, false, evalCtx)
 	assert.NoError(t, err)
-	assert.Equal(t, false, generation)
+	assert.Equal(t, value, generation)
 }
 
 func TestFloatEvaluation(t *testing.T) {
-	mock := provider.NewProviderMock()
-	assert.NoError(t, openfeature.SetProvider(mock))
+	m := provider.NewProviderMock()
+	flagKey := "percent-failure-allowed"
+	percentFailAllowed := float64(0.5)
 
-	mockImpl, ok := mock.(*provider.MDUProviderMock)
-	assert.True(t, ok)
-	err := openfeature.SetProvider(provider.NewProvider())
+	m.SetFloat(flagKey, percentFailAllowed)
+	err := openfeature.SetProvider(m)
 	assert.NoError(t, err)
 
 	evalCtx := openfeature.NewEvaluationContext("", map[string]any{})
 	client := openfeature.NewClient("floatEvalTests")
 
-	generation, err := client.FloatValue(context.Background(), "special_ability_buff_perc", 0.0, evalCtx)
+	generation, err := client.FloatValue(context.Background(), flagKey, 0.0, evalCtx)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 0.23456, generation)
+	assert.Equal(t, percentFailAllowed, generation)
 }
 
 func TestIntEvaluation(t *testing.T) {
-	mock := provider.NewProviderMock()
-	assert.NoError(t, openfeature.SetProvider(mock))
+	m := provider.NewProviderMock()
+	flagKey := "num-workers"
+	numWorkers := 5
 
-	mockImpl, ok := mock.(*provider.MDUProviderMock)
-	assert.True(t, ok)
-	err := openfeature.SetProvider(provider.NewProvider())
+	m.SetInt(flagKey, int64(numWorkers))
+	err := openfeature.SetProvider(m)
 	assert.NoError(t, err)
 
 	evalCtx := openfeature.NewEvaluationContext("", map[string]any{})
 	client := openfeature.NewClient("intEvalTests")
 
-	generation, err := client.IntValue(context.Background(), "num_of_special_abilities", 0, evalCtx)
+	generation, err := client.IntValue(context.Background(), flagKey, 0, evalCtx)
 
 	assert.NoError(t, err)
-	assert.Equal(t, int64(12), generation)
+	assert.Equal(t, int64(numWorkers), generation)
 }

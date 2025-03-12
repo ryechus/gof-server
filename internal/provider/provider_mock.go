@@ -47,3 +47,11 @@ func (m *MDUProviderMock) ObjectEvaluation(ctx context.Context, flag string, def
 }
 func (m *MDUProviderMock) Hooks() []openfeature.Hook { return []openfeature.Hook{} }
 
+func NewProviderMock() *MDUProviderMock {
+	return &MDUProviderMock{
+		stringFlagValues: make(map[string]string),
+		boolFlagValues:   make(map[string]bool),
+		intFlagValues:    make(map[string]int64),
+		floatFlagValues:  make(map[string]float64),
+	}
+}

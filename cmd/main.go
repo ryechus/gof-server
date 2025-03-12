@@ -9,14 +9,15 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/placer14/gof-server/internal/database"
+	"github.com/placer14/gof-server/internal/handlers"
 	"gorm.io/gorm"
 )
 
 func main() {
-	db := database.GetDB()
-	http.HandleFunc("/ping", service.pingHandler)
-	http.HandleFunc("/get_string_value", getStringValue(db))
-	http.HandleFunc("/set_flag_value", setFlagValue(db))
+	// db := database.GetDB()
+	http.HandleFunc("/ping", handlers.HandlePing)
+	// http.HandleFunc("/get_string_value", getStringValue(db))
+	// http.HandleFunc("/set_flag_value", setFlagValue(db))
 
 	fmt.Println("Server is running on http://localhost:23456")
 	// defer db.Close()
