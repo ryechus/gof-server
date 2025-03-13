@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"time"
@@ -15,18 +17,30 @@ import (
 )
 
 func main() {
+	mux := http.NewServeMux()
 	provider.PopulateFlagValues()
 	// db := database.GetDB()
-	http.HandleFunc("/ping", handlers.HandlePing)
-	http.HandleFunc("/string/{flagKey}", handlers.GetStringValue)
-	http.HandleFunc("/float/{flagKey}", handlers.GetFloatValue)
-	http.HandleFunc("/int/{flagKey}", handlers.GetIntValue)
-	http.HandleFunc("/bool/{flagKey}", handlers.GetBoolValue)
+	mux.HandleFunc("/ping", handlers.HandlePing)
+	mux.HandleFunc("/string/{flagKey}", handlers.GetStringValue)
+	mux.HandleFunc("/float/{flagKey}", handlers.GetFloatValue)
+	mux.HandleFunc("/int/{flagKey}", handlers.GetIntValue)
+	mux.HandleFunc("/bool/{flagKey}", handlers.GetBoolValue)
 	// http.HandleFunc("/set_flag_value", setFlagValue(db))
 
 	fmt.Println("Server is running on http://localhost:23456")
 	// defer db.Close()
-	log.Fatal(http.ListenAndServe(":23456", nil))
+	ctx := context.Background()
+	server := &http.Server{
+		Addr:    ":23456",
+		Handler: mux,
+		BaseContext: func(l net.Listener) context.Context {
+			m := provider.NewProviderMock()
+			ctx = context.WithValue(ctx, provider.KeyFlagStore, m)
+			return ctx
+		},
+	}
+
+	log.Fatal(server.ListenAndServe())
 }
 
 func handlePing(w http.ResponseWriter, r *http.Request) {

@@ -6,6 +6,10 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
+type key int
+
+const KeyFlagStore key = iota
+
 type MDUProviderMock struct {
 	stringFlagValues map[string]string
 	boolFlagValues   map[string]bool
@@ -18,15 +22,15 @@ func (m *MDUProviderMock) SetFloat(name string, value float64) {
 }
 func (m *MDUProviderMock) SetString(name string, value string) {
 	m.stringFlagValues[name] = value
-
+}
+func (m *MDUProviderMock) GetString(name string) string {
+	return m.stringFlagValues[name]
 }
 func (m *MDUProviderMock) SetBool(name string, value bool) {
 	m.boolFlagValues[name] = value
-
 }
 func (m *MDUProviderMock) SetInt(name string, value int64) {
 	m.intFlagValues[name] = value
-
 }
 
 func (m *MDUProviderMock) Metadata() openfeature.Metadata { return openfeature.Metadata{} }
