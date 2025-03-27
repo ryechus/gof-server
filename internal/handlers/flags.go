@@ -8,19 +8,14 @@ import (
 )
 
 func GetStringValue(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	flagKey := r.PathValue("flagKey")
 
-	responseJson, err := json.Marshal(responseType{Value: provider.StringFlagValues[flagKey].FlagValue})
+	// responseJson, err := json.Marshal(responseType{Value: provider.StringFlagValues[flagKey].FlagValue})
 
-	// ctx := r.Context()
-	// m := ctx.Value(provider.KeyFlagStore)
-	// mImpl := m.(*provider.MDUProviderMock)
-	// responseJson, err := json.Marshal(responseType{Value: mImpl.GetString(flagKey)})
+	ctx := r.Context()
+	m := ctx.Value(provider.KeyFlagStore)
+	mImpl := m.(*provider.MDUProviderMock)
+	responseJson, err := json.Marshal(responseType{Value: mImpl.GetString(flagKey)})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -30,12 +25,33 @@ func GetStringValue(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(responseJson))
 }
 
-func GetFloatValue(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+func SetStringvalue(w http.ResponseWriter, r *http.Request) {
+	flagKey := r.PathValue("flagKey")
+
+	ctx := r.Context()
+	m := ctx.Value(provider.KeyFlagStore)
+	mImpl := m.(*provider.MDUProviderMock)
+
+	// define custom type
+	type Input struct {
+		FlagValue string `json:"value"`
+	}
+	var input Input
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	mImpl.SetString(flagKey, input.FlagValue)
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+	_, _ = w.Write([]byte(""))
+}
+
+func GetFloatValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	responseJson, err := json.Marshal(responseType{Value: provider.FloatFlagValues[flagKey].FlagValue})
@@ -49,11 +65,6 @@ func GetFloatValue(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetIntValue(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	flagKey := r.PathValue("flagKey")
 
 	responseJson, err := json.Marshal(responseType{Value: int64(provider.IntFlagValues[flagKey].FlagValue)})
@@ -67,11 +78,6 @@ func GetIntValue(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetBoolValue(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	flagKey := r.PathValue("flagKey")
 
 	responseJson, err := json.Marshal(responseType{Value: provider.BoolFlagValues[flagKey].FlagValue})
