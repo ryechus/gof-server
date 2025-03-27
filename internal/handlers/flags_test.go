@@ -22,7 +22,8 @@ func TestGetStringValueHandler(t *testing.T) {
 	m.SetString("hello", "world")
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, provider.KeyFlagStore, m)
-	req := httptest.NewRequestWithContext(ctx, http.MethodGet, "/string/hello", nil)
+	req := httptest.NewRequestWithContext(ctx, http.MethodGet, "/string/{flagKey}", nil)
+	req.SetPathValue("flagKey", "hello")
 	w := httptest.NewRecorder()
 
 	handlers.GetStringValue(w, req)
