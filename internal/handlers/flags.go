@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/placer14/gof-server/internal/storage"
+	"github.com/placer14/gof-server/internal/config"
+	"gopkg.in/go-playground/validator.v8"
 )
 
 func GetStringValue(w http.ResponseWriter, r *http.Request) {
@@ -13,8 +14,8 @@ func GetStringValue(w http.ResponseWriter, r *http.Request) {
 	// responseJson, err := json.Marshal(responseType{Value: provider.StringFlagValues[flagKey].FlagValue})
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(storage.KeyInMemoryStorage)
-	storage := ctx_storage.(*storage.InMemoryStorage)
+	ctx_storage := ctx.Value(config.KeyVariable)
+	storage := ctx_storage.(*config.FlagStorageType)
 	value, _ := storage.GetString(flagKey)
 	responseJson, err := json.Marshal(responseType{Value: value})
 	if err != nil {
@@ -30,8 +31,8 @@ func SetStringvalue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(storage.KeyInMemoryStorage)
-	storage := ctx_storage.(*storage.InMemoryStorage)
+	ctx_storage := ctx.Value(config.KeyVariable)
+	storage := ctx_storage.(*config.FlagStorageType)
 
 	// define custom type
 	type Input struct {
@@ -56,8 +57,8 @@ func GetFloatValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(storage.KeyInMemoryStorage)
-	storage := ctx_storage.(*storage.InMemoryStorage)
+	ctx_storage := ctx.Value(config.KeyVariable)
+	storage := ctx_storage.(*config.FlagStorageType)
 	value, _ := storage.GetFloat(flagKey)
 
 	responseJson, err := json.Marshal(responseType{Value: value})
@@ -74,8 +75,8 @@ func SetFloatValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(storage.KeyInMemoryStorage)
-	storage := ctx_storage.(*storage.InMemoryStorage)
+	ctx_storage := ctx.Value(config.KeyVariable)
+	storage := ctx_storage.(*config.FlagStorageType)
 
 	// define custom type
 	type Input struct {
@@ -100,8 +101,8 @@ func GetIntValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(storage.KeyInMemoryStorage)
-	storage := ctx_storage.(*storage.InMemoryStorage)
+	ctx_storage := ctx.Value(config.KeyVariable)
+	storage := ctx_storage.(*config.FlagStorageType)
 	value, _ := storage.GetInt(flagKey)
 
 	responseJson, err := json.Marshal(responseType{Value: int64(value)})
@@ -118,8 +119,8 @@ func SetIntValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(storage.KeyInMemoryStorage)
-	storage := ctx_storage.(*storage.InMemoryStorage)
+	ctx_storage := ctx.Value(config.KeyVariable)
+	storage := ctx_storage.(*config.FlagStorageType)
 
 	// define custom type
 	type Input struct {
@@ -144,8 +145,8 @@ func GetBoolValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(storage.KeyDBStorage)
-	storage := ctx_storage.(*storage.DBStorage)
+	ctx_storage := ctx.Value(config.KeyVariable)
+	storage := ctx_storage.(*config.FlagStorageType)
 	value, err := storage.GetBool(flagKey)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -166,8 +167,8 @@ func SetBoolValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(storage.KeyDBStorage)
-	storage := ctx_storage.(*storage.DBStorage)
+	ctx_storage := ctx.Value(config.KeyVariable)
+	storage := ctx_storage.(*config.FlagStorageType)
 
 	// define custom type
 	type Input struct {
@@ -181,8 +182,63 @@ func SetBoolValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storage.SetBoolVariations(flagKey, []bool{true, false})
+	storage.SetBool(flagKey, input.FlagValue)
 
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+	_, _ = w.Write([]byte(""))
+}
+
+func CreateFlag(w http.ResponseWriter, r *http.Request) {
+	// ctx := r.Context()
+	// ctx_storage := ctx.Value(config.KeyVariable)
+	// storage := ctx_storage.(*config.FlagStorageType)
+
+	config := &validator.Config{TagName: "validate"}
+
+	validate := validator.New(config)
+	var input createFlagPayload
+	err := json.NewDecoder(r.Body).Decode(&input)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = validate.Struct(input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// switch input.FlagType {
+	// case "bool":
+	// 	var variations []bool
+	// 	for _, variation := range input.Variations {
+	// 		as_bool, ok := variation.Value.(bool)
+	// 		if !ok {
+	// 			http.Error(w, "something went wrong", http.StatusBadRequest)
+	// 			return
+	// 		}
+	// 		variations = append(variations, as_bool)
+	// 	}
+	// 	storage.SetBoolVariations(input.Key, variations)
+	// case "string":
+	// 	var variations []string
+	// 	for _, variation := range input.Variations {
+	// 		as_bool, ok := variation.Value.(string)
+	// 		if !ok {
+	// 			http.Error(w, "something went wrong", http.StatusBadRequest)
+	// 			return
+	// 		}
+	// 		variations = append(variations, as_bool)
+	// 	}
+	// 	storage.SetStringVariations(input.Key, variations)
+	// }
+
+	// for _, variation := range input.Variations {
+	// 	fmt.Printf("%+v\n", variation)
+	// }
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 	_, _ = w.Write([]byte(""))

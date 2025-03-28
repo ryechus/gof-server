@@ -7,9 +7,9 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/placer14/gof-server/internal/config"
 	"github.com/placer14/gof-server/internal/handlers"
 	"github.com/placer14/gof-server/internal/provider"
-	"github.com/placer14/gof-server/internal/storage"
 )
 
 func main() {
@@ -26,16 +26,17 @@ func main() {
 	mux.HandleFunc("GET /bool/{flagKey}", handlers.GetBoolValue)
 	mux.HandleFunc("POST /bool/{flagKey}", handlers.SetBoolValue)
 
+	mux.HandleFunc("POST /createFlag", handlers.CreateFlag)
+
 	fmt.Println("Server is running on http://localhost:23456")
-	// defer db.Close()
 	ctx := context.Background()
 	server := &http.Server{
 		Addr:    ":23456",
 		Handler: mux,
 		BaseContext: func(l net.Listener) context.Context {
 			// in_mem_storage := storage.NewInMemoryStorage()
-			db_storage := storage.NewDBStorage()
-			ctx = context.WithValue(ctx, storage.KeyDBStorage, db_storage)
+			storageIface := config.FlagStorageIface
+			ctx = context.WithValue(ctx, config.KeyVariable, storageIface)
 			return ctx
 		},
 	}

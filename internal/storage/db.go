@@ -49,22 +49,17 @@ func (s *DBStorage) SetBoolVariations(key string, values []bool) error {
 		}
 		flagKey = newFlag
 		db.Create(newFlag)
-
-		for _, value := range values {
-			flagVariation := database.FlagKeyBoolVariations{
-				UUID:        uuid.New().String(),
-				FlagKeyUUID: flagKey.UUID,
-				Value:       value,
-				LastUpdated: &now,
-			}
-			db.Create(flagVariation)
-		}
 	}
-	// variation_one_uuid := uuid.New()
-	// variation_two_uuid := uuid.New()
-	// db.Create(database.FlagKeyStringVariations{UUID: variation_one_uuid.String(), FlagKeyUUID: flagKey.UUID, Value: "false", LastUpdated: &now})
-	// db.Create(database.FlagKeyStringVariations{UUID: variation_two_uuid.String(), FlagKeyUUID: flag_key_uuid.String(), Value: "true", LastUpdated: &now})
-	// db.Create(database.FlagKey{UUID: flag_key_uuid.String(), Key: flag_key, ActiveVariation: variation_one_uuid.String(), LastUpdated: &now})
+
+	for _, value := range values {
+		flagVariation := database.FlagKeyBoolVariations{
+			UUID:        uuid.New().String(),
+			FlagKeyUUID: flagKey.UUID,
+			Value:       value,
+			LastUpdated: &now,
+		}
+		db.Create(flagVariation)
+	}
 	return nil
 }
 
@@ -76,6 +71,34 @@ func (s *DBStorage) SetFloat(key string, value float64) error { return nil }
 
 func (s *DBStorage) GetString(key string) (string, error) { return "", nil }
 func (s *DBStorage) SetString(key, value string) error    { return nil }
+func (s *DBStorage) SetStringVariations(key string, values []string) error {
+	db := database.GetDB()
+	var flagKey database.FlagKey
+
+	result := db.First(&flagKey, "key = ?", key)
+	now := time.Now()
+	if result.RowsAffected == 0 {
+		flag_key_uuid := uuid.New()
+		newFlag := database.FlagKey{
+			UUID:        flag_key_uuid.String(),
+			Key:         key,
+			LastUpdated: &now,
+		}
+		flagKey = newFlag
+		db.Create(newFlag)
+	}
+
+	for _, value := range values {
+		flagVariation := database.FlagKeyStringVariations{
+			UUID:        uuid.New().String(),
+			FlagKeyUUID: flagKey.UUID,
+			Value:       value,
+			LastUpdated: &now,
+		}
+		db.Create(flagVariation)
+	}
+	return nil
+}
 
 func NewDBStorage() *DBStorage {
 	return &DBStorage{}
