@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/placer14/gof-server/internal/provider"
+	"github.com/placer14/gof-server/internal/storage"
 )
 
 func GetStringValue(w http.ResponseWriter, r *http.Request) {
@@ -13,8 +13,8 @@ func GetStringValue(w http.ResponseWriter, r *http.Request) {
 	// responseJson, err := json.Marshal(responseType{Value: provider.StringFlagValues[flagKey].FlagValue})
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(provider.KeyStorage)
-	storage := ctx_storage.(*provider.Storage)
+	ctx_storage := ctx.Value(storage.KeyInMemoryStorage)
+	storage := ctx_storage.(*storage.InMemoryStorage)
 	value, _ := storage.GetString(flagKey)
 	responseJson, err := json.Marshal(responseType{Value: value})
 	if err != nil {
@@ -30,8 +30,8 @@ func SetStringvalue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(provider.KeyStorage)
-	storage := ctx_storage.(*provider.Storage)
+	ctx_storage := ctx.Value(storage.KeyInMemoryStorage)
+	storage := ctx_storage.(*storage.InMemoryStorage)
 
 	// define custom type
 	type Input struct {
@@ -56,8 +56,8 @@ func GetFloatValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(provider.KeyStorage)
-	storage := ctx_storage.(*provider.Storage)
+	ctx_storage := ctx.Value(storage.KeyInMemoryStorage)
+	storage := ctx_storage.(*storage.InMemoryStorage)
 	value, _ := storage.GetFloat(flagKey)
 
 	responseJson, err := json.Marshal(responseType{Value: value})
@@ -74,8 +74,8 @@ func SetFloatValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(provider.KeyStorage)
-	storage := ctx_storage.(*provider.Storage)
+	ctx_storage := ctx.Value(storage.KeyInMemoryStorage)
+	storage := ctx_storage.(*storage.InMemoryStorage)
 
 	// define custom type
 	type Input struct {
@@ -100,8 +100,8 @@ func GetIntValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(provider.KeyStorage)
-	storage := ctx_storage.(*provider.Storage)
+	ctx_storage := ctx.Value(storage.KeyInMemoryStorage)
+	storage := ctx_storage.(*storage.InMemoryStorage)
 	value, _ := storage.GetInt(flagKey)
 
 	responseJson, err := json.Marshal(responseType{Value: int64(value)})
@@ -118,8 +118,8 @@ func SetIntValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(provider.KeyStorage)
-	storage := ctx_storage.(*provider.Storage)
+	ctx_storage := ctx.Value(storage.KeyInMemoryStorage)
+	storage := ctx_storage.(*storage.InMemoryStorage)
 
 	// define custom type
 	type Input struct {
@@ -144,9 +144,13 @@ func GetBoolValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(provider.KeyStorage)
-	storage := ctx_storage.(*provider.Storage)
-	value, _ := storage.GetBool(flagKey)
+	ctx_storage := ctx.Value(storage.KeyDBStorage)
+	storage := ctx_storage.(*storage.DBStorage)
+	value, err := storage.GetBool(flagKey)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
 
 	responseJson, err := json.Marshal(responseType{Value: value})
 	if err != nil {
@@ -162,8 +166,8 @@ func SetBoolValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	ctx_storage := ctx.Value(provider.KeyStorage)
-	storage := ctx_storage.(*provider.Storage)
+	ctx_storage := ctx.Value(storage.KeyDBStorage)
+	storage := ctx_storage.(*storage.DBStorage)
 
 	// define custom type
 	type Input struct {
@@ -177,7 +181,7 @@ func SetBoolValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storage.SetBool(flagKey, input.FlagValue)
+	storage.SetBoolVariations(flagKey, []bool{true, false})
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusNoContent)

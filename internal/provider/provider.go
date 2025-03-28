@@ -4,12 +4,13 @@ import (
 	"context"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/placer14/gof-server/internal/storage"
 )
 
 type MDUProvider openfeature.FeatureProvider
 
 type MDUProviderImpl struct {
-	store Storageable
+	store storage.Storageable
 }
 
 func (p *MDUProviderImpl) Metadata() openfeature.Metadata { return openfeature.Metadata{} }
@@ -72,7 +73,7 @@ func (p *MDUProviderImpl) ObjectEvaluation(ctx context.Context, flag string, def
 }
 func (p *MDUProviderImpl) Hooks() []openfeature.Hook { return []openfeature.Hook{} }
 
-func NewProvider(store Storageable) *MDUProviderImpl {
+func NewProvider(store storage.Storageable) *MDUProviderImpl {
 	// PopulateFlagValues()
 	return &MDUProviderImpl{store: store}
 }

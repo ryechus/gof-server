@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/placer14/gof-server/internal/handlers"
-	"github.com/placer14/gof-server/internal/provider"
+	"github.com/placer14/gof-server/internal/storage"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,10 +19,10 @@ type respValueType struct {
 }
 
 func TestGetStringValueHandler(t *testing.T) {
-	m := provider.NewStorage()
+	m := storage.NewInMemoryStorage()
 	m.SetString("hello", "world")
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, provider.KeyStorage, m)
+	ctx = context.WithValue(ctx, storage.KeyInMemoryStorage, m)
 	req := httptest.NewRequestWithContext(ctx, http.MethodGet, "/string/{flagKey}", nil)
 	req.SetPathValue("flagKey", "hello")
 	w := httptest.NewRecorder()
@@ -42,12 +42,12 @@ func TestGetStringValueHandler(t *testing.T) {
 }
 
 func TestGetBoolValueHandler(t *testing.T) {
-	m := provider.NewStorage()
+	m := storage.NewInMemoryStorage()
 	flagKey := "hello"
 	flagValue := true
 	m.SetBool(flagKey, flagValue)
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, provider.KeyStorage, m)
+	ctx = context.WithValue(ctx, storage.KeyInMemoryStorage, m)
 	req := httptest.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/bool/%s", flagKey), nil)
 	req.SetPathValue("flagKey", "hello")
 	w := httptest.NewRecorder()
@@ -67,12 +67,12 @@ func TestGetBoolValueHandler(t *testing.T) {
 }
 
 func TestGetIntValueHandler(t *testing.T) {
-	m := provider.NewStorage()
+	m := storage.NewInMemoryStorage()
 	flagKey := "hello"
 	flagValue := int64(1_000_000)
 	m.SetInt(flagKey, flagValue)
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, provider.KeyStorage, m)
+	ctx = context.WithValue(ctx, storage.KeyInMemoryStorage, m)
 	req := httptest.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/int/%s", flagKey), nil)
 	req.SetPathValue("flagKey", "hello")
 	w := httptest.NewRecorder()
@@ -92,12 +92,12 @@ func TestGetIntValueHandler(t *testing.T) {
 }
 
 func TestGetFloatValueHandler(t *testing.T) {
-	m := provider.NewStorage()
+	m := storage.NewInMemoryStorage()
 	flagKey := "hello"
 	flagValue := 1.0891
 	m.SetFloat(flagKey, flagValue)
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, provider.KeyStorage, m)
+	ctx = context.WithValue(ctx, storage.KeyInMemoryStorage, m)
 	req := httptest.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("/int/%s", flagKey), nil)
 	req.SetPathValue("flagKey", "hello")
 	w := httptest.NewRecorder()

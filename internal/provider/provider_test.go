@@ -6,11 +6,12 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/placer14/gof-server/internal/provider"
+	"github.com/placer14/gof-server/internal/storage"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestStringEvaluation(t *testing.T) {
-	store := provider.NewStorage()
+	store := storage.NewInMemoryStorage()
 	subject := provider.NewProvider(store)
 
 	flagKey := "dataplane-generation"
@@ -30,7 +31,7 @@ func TestStringEvaluation(t *testing.T) {
 }
 
 func TestBoolEvaluation(t *testing.T) {
-	store := provider.NewStorage()
+	store := storage.NewInMemoryStorage()
 	subject := provider.NewProvider(store)
 
 	flagKey := "grant-soil-access"
@@ -50,7 +51,7 @@ func TestBoolEvaluation(t *testing.T) {
 }
 
 func TestFloatEvaluation(t *testing.T) {
-	store := provider.NewStorage()
+	store := storage.NewInMemoryStorage()
 	subject := provider.NewProvider(store)
 
 	flagKey := "percent-failure-allowed"
@@ -70,7 +71,7 @@ func TestFloatEvaluation(t *testing.T) {
 }
 
 func TestIntEvaluation(t *testing.T) {
-	store := provider.NewStorage()
+	store := storage.NewInMemoryStorage()
 	subject := provider.NewProvider(store)
 
 	flagKey := "num-workers"

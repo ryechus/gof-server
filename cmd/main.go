@@ -9,6 +9,7 @@ import (
 
 	"github.com/placer14/gof-server/internal/handlers"
 	"github.com/placer14/gof-server/internal/provider"
+	"github.com/placer14/gof-server/internal/storage"
 )
 
 func main() {
@@ -32,8 +33,9 @@ func main() {
 		Addr:    ":23456",
 		Handler: mux,
 		BaseContext: func(l net.Listener) context.Context {
-			storage := provider.NewStorage()
-			ctx = context.WithValue(ctx, provider.KeyStorage, storage)
+			// in_mem_storage := storage.NewInMemoryStorage()
+			db_storage := storage.NewDBStorage()
+			ctx = context.WithValue(ctx, storage.KeyDBStorage, db_storage)
 			return ctx
 		},
 	}

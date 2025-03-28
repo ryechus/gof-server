@@ -18,15 +18,9 @@ func GetDB() *gorm.DB {
 
 	db.AutoMigrate(&FlagKey{})
 	db.AutoMigrate(&FlagKeyStringVariations{})
-
-	// sqlStmt := `
-	// create table foo (id integer not null primary key, name text);
-	// delete from foo;
-	// `
-	// _, err = db.Exec(sqlStmt)
-	// if err != nil {
-	// 	log.Printf("%q: %s\n", err, sqlStmt)
-	// }
+	db.AutoMigrate(&FlagKeyBoolVariations{})
+	db.AutoMigrate(&FlagKeyFloatVariations{})
+	db.AutoMigrate(&FlagKeyIntVariations{})
 
 	return db
 }
