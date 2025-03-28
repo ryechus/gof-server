@@ -14,12 +14,11 @@ func TestStringEvaluation(t *testing.T) {
 	subject := provider.NewProvider(store)
 	err := openfeature.SetProvider(subject)
 	assert.NoError(t, err)
-	// m := provider.NewProviderMock()
-	// assert.NoError(t, openfeature.SetProvider(m))
 
 	flagKey := "dataplane-generation"
 	expectedStr := "metal.v1"
-	assert.NoError(t, store.SetString(flagKey, expectedStr))
+	err = store.SetString(flagKey, expectedStr)
+	assert.NoError(t, err)
 
 	evalCtx := openfeature.NewEvaluationContext("", map[string]any{})
 	client := openfeature.NewClient("stringEvalTests")
@@ -28,23 +27,25 @@ func TestStringEvaluation(t *testing.T) {
 	assert.Equal(t, expectedStr, generation)
 }
 
-// func TestBoolEvaluation(t *testing.T) {
-// 	m := provider.NewProviderMock()
-// 	flagKey := "grant-soil-access"
+func TestBoolEvaluation(t *testing.T) {
+	store := provider.NewStorage()
+	subject := provider.NewProvider(store)
 
-// 	err := openfeature.SetProvider(m)
-// 	assert.NoError(t, err)
+	flagKey := "grant-soil-access"
 
-// 	value := true
-// 	m.SetBool(flagKey, value)
+	err := openfeature.SetProvider(subject)
+	assert.NoError(t, err)
 
-// 	evalCtx := openfeature.NewEvaluationContext("", map[string]any{})
-// 	client := openfeature.NewClient("boolEvalTests")
+	value := true
+	store.SetBool(flagKey, value)
 
-// 	generation, err := client.BooleanValue(context.Background(), flagKey, false, evalCtx)
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, value, generation)
-// }
+	evalCtx := openfeature.NewEvaluationContext("", map[string]any{})
+	client := openfeature.NewClient("boolEvalTests")
+
+	generation, err := client.BooleanValue(context.Background(), flagKey, false, evalCtx)
+	assert.NoError(t, err)
+	assert.Equal(t, value, generation)
+}
 
 // func TestFloatEvaluation(t *testing.T) {
 // 	m := provider.NewProviderMock()

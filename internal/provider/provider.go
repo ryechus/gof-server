@@ -14,10 +14,7 @@ type MDUProviderImpl struct {
 
 func (p *MDUProviderImpl) Metadata() openfeature.Metadata { return openfeature.Metadata{} }
 func (p *MDUProviderImpl) BooleanEvaluation(ctx context.Context, flag string, defaultValue bool, evalCtx openfeature.FlattenedContext) openfeature.BoolResolutionDetail {
-	return openfeature.BoolResolutionDetail{Value: BoolFlagValues[flag].FlagValue}
-}
-func (p *MDUProviderImpl) StringEvaluation(ctx context.Context, flag string, defaultValue string, evalCtx openfeature.FlattenedContext) openfeature.StringResolutionDetail {
-	r, err := p.store.GetString(flag)
+	value, err := p.store.GetBool(flag)
 	if err != nil {
 		detail := openfeature.ProviderResolutionDetail{
 			ResolutionError: openfeature.NewFlagNotFoundResolutionError(err.Error()),
@@ -25,10 +22,23 @@ func (p *MDUProviderImpl) StringEvaluation(ctx context.Context, flag string, def
 			Variant:         "",
 			FlagMetadata:    openfeature.FlagMetadata{},
 		}
-		return openfeature.StringResolutionDetail{Value: r, ProviderResolutionDetail: detail}
+		return openfeature.BoolResolutionDetail{Value: value, ProviderResolutionDetail: detail}
+	}
+	return openfeature.BoolResolutionDetail{Value: value}
+}
+func (p *MDUProviderImpl) StringEvaluation(ctx context.Context, flag string, defaultValue string, evalCtx openfeature.FlattenedContext) openfeature.StringResolutionDetail {
+	value, err := p.store.GetString(flag)
+	if err != nil {
+		detail := openfeature.ProviderResolutionDetail{
+			ResolutionError: openfeature.NewFlagNotFoundResolutionError(err.Error()),
+			Reason:          openfeature.ErrorReason,
+			Variant:         "",
+			FlagMetadata:    openfeature.FlagMetadata{},
+		}
+		return openfeature.StringResolutionDetail{Value: value, ProviderResolutionDetail: detail}
 	}
 
-	return openfeature.StringResolutionDetail{Value: r}
+	return openfeature.StringResolutionDetail{Value: value}
 }
 
 func (p *MDUProviderImpl) FloatEvaluation(ctx context.Context, flag string, defaultValue float64, evalCtx openfeature.FlattenedContext) openfeature.FloatResolutionDetail {
