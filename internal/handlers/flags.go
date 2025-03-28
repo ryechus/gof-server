@@ -13,9 +13,10 @@ func GetStringValue(w http.ResponseWriter, r *http.Request) {
 	// responseJson, err := json.Marshal(responseType{Value: provider.StringFlagValues[flagKey].FlagValue})
 
 	ctx := r.Context()
-	m := ctx.Value(provider.KeyFlagStore)
-	mImpl := m.(*provider.MDUProviderMock)
-	responseJson, err := json.Marshal(responseType{Value: mImpl.GetString(flagKey)})
+	ctx_storage := ctx.Value(provider.KeyStorage)
+	storage := ctx_storage.(*provider.Storage)
+	value, _ := storage.GetString(flagKey)
+	responseJson, err := json.Marshal(responseType{Value: value})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -29,8 +30,8 @@ func SetStringvalue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
-	m := ctx.Value(provider.KeyFlagStore)
-	mImpl := m.(*provider.MDUProviderMock)
+	ctx_storage := ctx.Value(provider.KeyStorage)
+	storage := ctx_storage.(*provider.Storage)
 
 	// define custom type
 	type Input struct {
@@ -44,7 +45,7 @@ func SetStringvalue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mImpl.SetString(flagKey, input.FlagValue)
+	storage.SetString(flagKey, input.FlagValue)
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
@@ -54,7 +55,12 @@ func SetStringvalue(w http.ResponseWriter, r *http.Request) {
 func GetFloatValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
-	responseJson, err := json.Marshal(responseType{Value: provider.FloatFlagValues[flagKey].FlagValue})
+	ctx := r.Context()
+	ctx_storage := ctx.Value(provider.KeyStorage)
+	storage := ctx_storage.(*provider.Storage)
+	value, _ := storage.GetFloat(flagKey)
+
+	responseJson, err := json.Marshal(responseType{Value: value})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -62,12 +68,43 @@ func GetFloatValue(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(responseJson))
+}
+
+func SetFloatValue(w http.ResponseWriter, r *http.Request) {
+	flagKey := r.PathValue("flagKey")
+
+	ctx := r.Context()
+	ctx_storage := ctx.Value(provider.KeyStorage)
+	storage := ctx_storage.(*provider.Storage)
+
+	// define custom type
+	type Input struct {
+		FlagValue float64 `json:"value"`
+	}
+	var input Input
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	storage.SetFloat(flagKey, input.FlagValue)
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+	_, _ = w.Write([]byte(""))
 }
 
 func GetIntValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
-	responseJson, err := json.Marshal(responseType{Value: int64(provider.IntFlagValues[flagKey].FlagValue)})
+	ctx := r.Context()
+	ctx_storage := ctx.Value(provider.KeyStorage)
+	storage := ctx_storage.(*provider.Storage)
+	value, _ := storage.GetInt(flagKey)
+
+	responseJson, err := json.Marshal(responseType{Value: int64(value)})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -77,10 +114,41 @@ func GetIntValue(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(responseJson))
 }
 
+func SetIntValue(w http.ResponseWriter, r *http.Request) {
+	flagKey := r.PathValue("flagKey")
+
+	ctx := r.Context()
+	ctx_storage := ctx.Value(provider.KeyStorage)
+	storage := ctx_storage.(*provider.Storage)
+
+	// define custom type
+	type Input struct {
+		FlagValue int64 `json:"value"`
+	}
+	var input Input
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	storage.SetInt(flagKey, input.FlagValue)
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+	_, _ = w.Write([]byte(""))
+}
+
 func GetBoolValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
-	responseJson, err := json.Marshal(responseType{Value: provider.BoolFlagValues[flagKey].FlagValue})
+	ctx := r.Context()
+	ctx_storage := ctx.Value(provider.KeyStorage)
+	storage := ctx_storage.(*provider.Storage)
+	value, _ := storage.GetBool(flagKey)
+
+	responseJson, err := json.Marshal(responseType{Value: value})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -88,4 +156,30 @@ func GetBoolValue(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(responseJson))
+}
+
+func SetBoolValue(w http.ResponseWriter, r *http.Request) {
+	flagKey := r.PathValue("flagKey")
+
+	ctx := r.Context()
+	ctx_storage := ctx.Value(provider.KeyStorage)
+	storage := ctx_storage.(*provider.Storage)
+
+	// define custom type
+	type Input struct {
+		FlagValue bool `json:"value"`
+	}
+	var input Input
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	storage.SetBool(flagKey, input.FlagValue)
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+	_, _ = w.Write([]byte(""))
 }

@@ -42,10 +42,30 @@ func (p *MDUProviderImpl) StringEvaluation(ctx context.Context, flag string, def
 }
 
 func (p *MDUProviderImpl) FloatEvaluation(ctx context.Context, flag string, defaultValue float64, evalCtx openfeature.FlattenedContext) openfeature.FloatResolutionDetail {
-	return openfeature.FloatResolutionDetail{Value: FloatFlagValues[flag].FlagValue}
+	value, err := p.store.GetFloat(flag)
+	if err != nil {
+		detail := openfeature.ProviderResolutionDetail{
+			ResolutionError: openfeature.NewFlagNotFoundResolutionError(err.Error()),
+			Reason:          openfeature.ErrorReason,
+			Variant:         "",
+			FlagMetadata:    openfeature.FlagMetadata{},
+		}
+		return openfeature.FloatResolutionDetail{Value: value, ProviderResolutionDetail: detail}
+	}
+	return openfeature.FloatResolutionDetail{Value: value}
 }
 func (p *MDUProviderImpl) IntEvaluation(ctx context.Context, flag string, defaultValue int64, evalCtx openfeature.FlattenedContext) openfeature.IntResolutionDetail {
-	return openfeature.IntResolutionDetail{Value: IntFlagValues[flag].FlagValue}
+	value, err := p.store.GetInt(flag)
+	if err != nil {
+		detail := openfeature.ProviderResolutionDetail{
+			ResolutionError: openfeature.NewFlagNotFoundResolutionError(err.Error()),
+			Reason:          openfeature.ErrorReason,
+			Variant:         "",
+			FlagMetadata:    openfeature.FlagMetadata{},
+		}
+		return openfeature.IntResolutionDetail{Value: value, ProviderResolutionDetail: detail}
+	}
+	return openfeature.IntResolutionDetail{Value: value}
 }
 func (p *MDUProviderImpl) ObjectEvaluation(ctx context.Context, flag string, defaultValue interface{}, evalCtx openfeature.FlattenedContext) openfeature.InterfaceResolutionDetail {
 	return openfeature.InterfaceResolutionDetail{}

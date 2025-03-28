@@ -12,10 +12,12 @@ import (
 func TestStringEvaluation(t *testing.T) {
 	store := provider.NewStorage()
 	subject := provider.NewProvider(store)
+
+	flagKey := "dataplane-generation"
+
 	err := openfeature.SetProvider(subject)
 	assert.NoError(t, err)
 
-	flagKey := "dataplane-generation"
 	expectedStr := "metal.v1"
 	err = store.SetString(flagKey, expectedStr)
 	assert.NoError(t, err)
@@ -47,38 +49,42 @@ func TestBoolEvaluation(t *testing.T) {
 	assert.Equal(t, value, generation)
 }
 
-// func TestFloatEvaluation(t *testing.T) {
-// 	m := provider.NewProviderMock()
-// 	flagKey := "percent-failure-allowed"
-// 	percentFailAllowed := float64(0.5)
+func TestFloatEvaluation(t *testing.T) {
+	store := provider.NewStorage()
+	subject := provider.NewProvider(store)
 
-// 	m.SetFloat(flagKey, percentFailAllowed)
-// 	err := openfeature.SetProvider(m)
-// 	assert.NoError(t, err)
+	flagKey := "percent-failure-allowed"
+	percentFailAllowed := float64(0.5)
 
-// 	evalCtx := openfeature.NewEvaluationContext("", map[string]any{})
-// 	client := openfeature.NewClient("floatEvalTests")
+	store.SetFloat(flagKey, percentFailAllowed)
+	err := openfeature.SetProvider(subject)
+	assert.NoError(t, err)
 
-// 	generation, err := client.FloatValue(context.Background(), flagKey, 0.0, evalCtx)
+	evalCtx := openfeature.NewEvaluationContext("", map[string]any{})
+	client := openfeature.NewClient("floatEvalTests")
 
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, percentFailAllowed, generation)
-// }
+	generation, err := client.FloatValue(context.Background(), flagKey, 0.0, evalCtx)
 
-// func TestIntEvaluation(t *testing.T) {
-// 	m := provider.NewProviderMock()
-// 	flagKey := "num-workers"
-// 	numWorkers := 5
+	assert.NoError(t, err)
+	assert.Equal(t, percentFailAllowed, generation)
+}
 
-// 	m.SetInt(flagKey, int64(numWorkers))
-// 	err := openfeature.SetProvider(m)
-// 	assert.NoError(t, err)
+func TestIntEvaluation(t *testing.T) {
+	store := provider.NewStorage()
+	subject := provider.NewProvider(store)
 
-// 	evalCtx := openfeature.NewEvaluationContext("", map[string]any{})
-// 	client := openfeature.NewClient("intEvalTests")
+	flagKey := "num-workers"
+	numWorkers := 5
 
-// 	generation, err := client.IntValue(context.Background(), flagKey, 0, evalCtx)
+	store.SetInt(flagKey, int64(numWorkers))
+	err := openfeature.SetProvider(subject)
+	assert.NoError(t, err)
 
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, int64(numWorkers), generation)
-// }
+	evalCtx := openfeature.NewEvaluationContext("", map[string]any{})
+	client := openfeature.NewClient("intEvalTests")
+
+	generation, err := client.IntValue(context.Background(), flagKey, 0, evalCtx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(numWorkers), generation)
+}
