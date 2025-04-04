@@ -29,10 +29,6 @@ type FlagKeyFloatVariations FlagVariation[float64]
 
 type FlagKeyBoolVariations FlagVariation[bool]
 
-type FlagVariations interface {
-	FlagKeyStringVariations | FlagKeyIntVariations | FlagKeyFloatVariations | FlagKeyBoolVariations
-}
-
 func GetTableName[T comparable](variation FlagVariation[T]) func(tx *gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
 		switch any(variation).(type) {

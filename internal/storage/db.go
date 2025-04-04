@@ -58,7 +58,7 @@ func (s *DBStorage) SetString(key, value string) error {
 }
 
 func CreateFlag[T comparable](key string, variations []T) {
-	fmt.Printf("Setting flag value for key %s", key)
+	fmt.Printf("Setting flag value for key %s\n", key)
 	db := database.GetDB()
 	var flagKey database.FlagKey
 
