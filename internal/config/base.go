@@ -2,8 +2,8 @@ package config
 
 import "github.com/placer14/gof-server/internal/storage"
 
-var FlagStorageIface storage.Storageable = storage.NewInMemoryStorage()
+var FlagStorageIface storage.Storageable = storage.NewDBStorage()
 
-type FlagStorageType = storage.InMemoryStorage
+type FlagStorageType = storage.DBStorage
 
-var KeyVariable = storage.KeyInMemoryStorage
+var KeyVariable = storage.KeyDBStorage
