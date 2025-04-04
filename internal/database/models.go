@@ -17,6 +17,7 @@ type FlagKey struct {
 type FlagVariation[T comparable] struct {
 	UUID        string `gorm:"primaryKey"`
 	FlagKeyUUID string
+	Name        string
 	Value       T
 	LastUpdated *time.Time
 }

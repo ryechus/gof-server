@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/placer14/gof-server/internal/database"
+	"github.com/placer14/gof-server/internal/handlers/payloads"
 )
 
 type key_db int
@@ -19,45 +20,73 @@ var _ Storageable = &DBStorage{}
 
 func (s *DBStorage) GetBool(key string) (bool, error) { return GetFlag[bool](key) }
 func (s *DBStorage) SetBool(key string, value bool) error {
-	variations := []bool{
-		value, value, value, value,
+	variations := []payloads.FlagVariation{
+		{
+			Name:  "",
+			Value: value,
+		},
+		{
+			Name:  "",
+			Value: value,
+		},
 	}
 
-	CreateFlag(key, variations)
+	CreateFlag[bool](key, variations)
 	return nil
 }
 
 func (s *DBStorage) GetInt(key string) (int64, error) { return GetFlag[int64](key) }
 func (s *DBStorage) SetInt(key string, value int64) error {
-	variations := []int64{
-		value, value, value, value,
+	variations := []payloads.FlagVariation{
+		{
+			Name:  "",
+			Value: value,
+		},
+		{
+			Name:  "",
+			Value: value,
+		},
 	}
 
-	CreateFlag(key, variations)
+	CreateFlag[int64](key, variations)
 	return nil
 }
 
 func (s *DBStorage) GetFloat(key string) (float64, error) { return GetFlag[float64](key) }
 func (s *DBStorage) SetFloat(key string, value float64) error {
-	variations := []float64{
-		value, value, value, value,
+	variations := []payloads.FlagVariation{
+		{
+			Name:  "",
+			Value: value,
+		},
+		{
+			Name:  "",
+			Value: value,
+		},
 	}
 
-	CreateFlag(key, variations)
+	CreateFlag[float64](key, variations)
 	return nil
 }
 
 func (s *DBStorage) GetString(key string) (string, error) { return GetFlag[string](key) }
 func (s *DBStorage) SetString(key, value string) error {
-	variations := []string{
-		value, value, value, value,
+	variations := []payloads.FlagVariation{
+		{
+			Name:  "",
+			Value: value,
+		},
+		{
+			Name:  "",
+			Value: value,
+		},
 	}
 
-	CreateFlag(key, variations)
+	CreateFlag[string](key, variations)
 	return nil
 }
 
-func CreateFlag[T comparable](key string, variations []T) {
+func CreateFlag[T comparable](key string, variations []payloads.FlagVariation) {
 	fmt.Printf("Setting flag value for key %s\n", key)
 	db := database.GetDB()
 	var flagKey database.FlagKey
@@ -78,7 +107,8 @@ func CreateFlag[T comparable](key string, variations []T) {
 			variation := database.FlagVariation[T]{
 				UUID:        uuid.NewString(),
 				FlagKeyUUID: newFlag.UUID,
-				Value:       value,
+				Value:       value.Value.(T),
+				Name:        value.Name,
 				LastUpdated: &now,
 			}
 			db.Scopes(database.GetTableName(variation)).Create(variation)

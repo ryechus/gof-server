@@ -26,6 +26,8 @@ func main() {
 	mux.HandleFunc("GET /bool/{flagKey}", handlers.GetBoolValue)
 	mux.HandleFunc("POST /bool/{flagKey}", handlers.SetBoolValue)
 
+	mux.HandleFunc("POST /createFlag", handlers.CreateFlag)
+
 	fmt.Println("Server is running on http://localhost:23456")
 	ctx := context.Background()
 	server := &http.Server{
