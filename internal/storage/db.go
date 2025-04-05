@@ -31,7 +31,7 @@ func (s *DBStorage) SetBool(key string, value bool) error {
 		},
 	}
 
-	CreateFlag[bool](key, variations)
+	CreateFlag[bool](key, "bool", variations)
 	return nil
 }
 
@@ -48,7 +48,7 @@ func (s *DBStorage) SetInt(key string, value int64) error {
 		},
 	}
 
-	CreateFlag[int64](key, variations)
+	CreateFlag[int64](key, "int", variations)
 	return nil
 }
 
@@ -65,7 +65,7 @@ func (s *DBStorage) SetFloat(key string, value float64) error {
 		},
 	}
 
-	CreateFlag[float64](key, variations)
+	CreateFlag[float64](key, "float", variations)
 	return nil
 }
 
@@ -82,38 +82,83 @@ func (s *DBStorage) SetString(key, value string) error {
 		},
 	}
 
-	CreateFlag[string](key, variations)
+	CreateFlag[string](key, "string", variations)
 	return nil
 }
 
-func CreateFlag[T comparable](key string, variations []payloads.FlagVariation) {
+func GetFlagValue(key string) (any, error) {
+	db := database.GetDB()
+	var flagKey database.FlagKey
+
+	result := db.First(&flagKey, "key = ?", key)
+	if result.RowsAffected == 0 {
+		return flagKey, result.Error
+	}
+
+	switch flagKey.FlagType {
+	case "string":
+		return GetFlag[string](key)
+	case "int":
+		return GetFlag[int64](key)
+	case "float":
+		return GetFlag[float64](key)
+	case "bool":
+		return GetFlag[bool](key)
+	default:
+		return nil, nil
+	}
+}
+
+func UpdateFlag(payload payloads.UpdateFlag) error {
+	fmt.Printf("Updating flag state for key %s to %t\n", payload.Key, payload.Enabled)
+	db := database.GetDB()
+
+	var flagKey database.FlagKey
+
+	result := db.First(&flagKey, "key = ?", payload.Key)
+	if result.RowsAffected == 0 {
+		return result.Error
+	}
+	flagKey.Enabled = payload.Enabled
+	db.Save(flagKey)
+
+	return nil
+}
+
+func CreateFlag[T comparable](key string, flagType string, variations []payloads.FlagVariation) {
 	fmt.Printf("Setting flag value for key %s\n", key)
 	db := database.GetDB()
 	var flagKey database.FlagKey
 
 	result := db.First(&flagKey, "key = ?", key)
+	var uuids []string
 
 	now := time.Now()
 	if result.RowsAffected == 0 {
 		flag_key_uuid := uuid.New()
 		newFlag := database.FlagKey{
 			UUID:        flag_key_uuid.String(),
+			FlagType:    flagType,
 			Key:         key,
 			Enabled:     false,
 			LastUpdated: &now,
 		}
 		db.Create(newFlag)
 		for _, value := range variations {
+			variationUUID := uuid.NewString()
 			variation := database.FlagVariation[T]{
-				UUID:        uuid.NewString(),
+				UUID:        variationUUID,
 				FlagKeyUUID: newFlag.UUID,
 				Value:       value.Value.(T),
 				Name:        value.Name,
 				LastUpdated: &now,
 			}
 			db.Scopes(database.GetTableName(variation)).Create(variation)
-			newFlag.DefaultVariation = variation.UUID
+			uuids = append(uuids, variationUUID)
 		}
+		lenVariations := len(uuids)
+		newFlag.DefaultEnabledVariation = uuids[0]
+		newFlag.DefaultVariation = uuids[lenVariations-1]
 		db.Save(newFlag)
 	}
 }
@@ -127,7 +172,11 @@ func GetFlag[T comparable](key string) (T, error) {
 	if result.RowsAffected != 0 {
 		var flagVariation database.FlagVariation[T]
 		scope := db.Scopes(database.GetTableName(flagVariation))
-		result = scope.First(&flagVariation, "uuid = ?", flagKey.DefaultVariation)
+		currentVariation := flagKey.DefaultVariation
+		if flagKey.Enabled {
+			currentVariation = flagKey.DefaultEnabledVariation
+		}
+		result = scope.First(&flagVariation, "uuid = ?", currentVariation)
 		if result.RowsAffected != 0 {
 			returnVal = flagVariation.Value
 			return returnVal, nil

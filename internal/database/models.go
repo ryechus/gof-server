@@ -7,11 +7,13 @@ import (
 )
 
 type FlagKey struct {
-	UUID             string `gorm:"primaryKey"`
-	Key              string
-	DefaultVariation string
-	Enabled          bool
-	LastUpdated      *time.Time
+	UUID                    string `gorm:"primaryKey"`
+	Key                     string
+	FlagType                string
+	DefaultVariation        string
+	DefaultEnabledVariation string
+	Enabled                 bool
+	LastUpdated             *time.Time
 }
 
 type FlagVariation[T comparable] struct {

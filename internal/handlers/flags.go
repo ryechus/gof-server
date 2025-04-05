@@ -10,6 +10,8 @@ import (
 	"gopkg.in/go-playground/validator.v8"
 )
 
+var ValidatorConfig = &validator.Config{TagName: "validate"}
+
 func GetStringValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
@@ -105,7 +107,7 @@ func GetIntValue(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ctx_storage := ctx.Value(config.KeyVariable)
 	storageType := ctx_storage.(*config.FlagStorageType)
-	value, _ := storageType.GetInt(flagKey)
+	value, _ := storageType.GetFloat(flagKey)
 
 	responseJson, err := json.Marshal(responseType{Value: int64(value)})
 	if err != nil {
@@ -191,14 +193,55 @@ func SetBoolValue(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(""))
 }
 
+func GetFlag(w http.ResponseWriter, r *http.Request) {
+	flagKey := r.PathValue("flagKey")
+
+	value, err := storage.GetFlagValue(flagKey)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	responseJson, err := json.Marshal(responseType{Value: value})
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(responseJson))
+}
+
+func UpdateFlag(w http.ResponseWriter, r *http.Request) {
+	validate := validator.New(ValidatorConfig)
+	var input payloads.UpdateFlag
+	err := json.NewDecoder(r.Body).Decode(&input)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = validate.Struct(input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = storage.UpdateFlag(input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+	_, _ = w.Write([]byte(""))
+}
+
 func CreateFlag(w http.ResponseWriter, r *http.Request) {
-	// ctx := r.Context()
-	// ctx_storage := ctx.Value(config.KeyVariable)
-	// storageType := ctx_storage.(*config.FlagStorageType)
-
-	config := &validator.Config{TagName: "validate"}
-
-	validate := validator.New(config)
+	validate := validator.New(ValidatorConfig)
 	var input createFlagPayload
 	err := json.NewDecoder(r.Body).Decode(&input)
 
@@ -215,17 +258,21 @@ func CreateFlag(w http.ResponseWriter, r *http.Request) {
 
 	switch input.FlagType {
 	case "bool":
+		if len(input.Variations) > 2 {
+			http.Error(w, "can only have two variations for boolean flags", http.StatusBadRequest)
+			return
+		}
 		variations := createVariations[bool](input.Variations)
-		storage.CreateFlag[bool](input.Key, variations)
+		storage.CreateFlag[bool](input.Key, input.FlagType, variations)
 	case "string":
 		variations := createVariations[string](input.Variations)
-		storage.CreateFlag[string](input.Key, variations)
+		storage.CreateFlag[string](input.Key, input.FlagType, variations)
 	case "float":
 		variations := createVariations[float64](input.Variations)
-		storage.CreateFlag[float64](input.Key, variations)
+		storage.CreateFlag[float64](input.Key, input.FlagType, variations)
 	case "int":
-		variations := createVariations[int64](input.Variations)
-		storage.CreateFlag[int64](input.Key, variations)
+		variations := createVariations[float64](input.Variations)
+		storage.CreateFlag[float64](input.Key, input.FlagType, variations)
 	}
 
 	w.Header().Set("content-type", "application/json")
@@ -238,8 +285,7 @@ func createVariations[T comparable](variations []flagVariation) []payloads.FlagV
 	for _, variation := range variations {
 		as_bool, ok := variation.Value.(T)
 		if !ok {
-			// http.Error(w, "something went wrong", http.StatusBadRequest)
-			panic("there was a problem")
+			panic("there was a problem casting flag variations")
 		}
 		castedVariations = append(castedVariations, payloads.FlagVariation{Value: as_bool, Name: variation.Name})
 	}
