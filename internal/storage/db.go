@@ -19,6 +19,9 @@ type DBStorage struct {
 var _ Storageable = &DBStorage{}
 
 func (s *DBStorage) GetBool(key string) (bool, error) { return GetFlag[bool](key) }
+func (s *DBStorage) CreateBoolFlag(key string, flagType string, variations []payloads.FlagVariation) error {
+	return CreateFlag[bool](key, flagType, variations)
+}
 func (s *DBStorage) SetBool(key string, value bool) error {
 	variations := []payloads.FlagVariation{
 		{
@@ -36,6 +39,9 @@ func (s *DBStorage) SetBool(key string, value bool) error {
 }
 
 func (s *DBStorage) GetInt(key string) (int64, error) { return GetFlag[int64](key) }
+func (s *DBStorage) CreateIntFlag(key string, flagType string, variations []payloads.FlagVariation) error {
+	return CreateFlag[int64](key, flagType, variations)
+}
 func (s *DBStorage) SetInt(key string, value int64) error {
 	variations := []payloads.FlagVariation{
 		{
@@ -53,6 +59,9 @@ func (s *DBStorage) SetInt(key string, value int64) error {
 }
 
 func (s *DBStorage) GetFloat(key string) (float64, error) { return GetFlag[float64](key) }
+func (s *DBStorage) CreateFloatFlag(key string, flagType string, variations []payloads.FlagVariation) error {
+	return CreateFlag[float64](key, flagType, variations)
+}
 func (s *DBStorage) SetFloat(key string, value float64) error {
 	variations := []payloads.FlagVariation{
 		{
@@ -70,6 +79,9 @@ func (s *DBStorage) SetFloat(key string, value float64) error {
 }
 
 func (s *DBStorage) GetString(key string) (string, error) { return GetFlag[string](key) }
+func (s *DBStorage) CreateStringFlag(key string, flagType string, variations []payloads.FlagVariation) error {
+	return CreateFlag[string](key, flagType, variations)
+}
 func (s *DBStorage) SetString(key, value string) error {
 	variations := []payloads.FlagVariation{
 		{
@@ -86,30 +98,7 @@ func (s *DBStorage) SetString(key, value string) error {
 	return nil
 }
 
-func GetFlagValue(key string) (any, error) {
-	db := database.GetDB()
-	var flagKey database.FlagKey
-
-	result := db.First(&flagKey, "key = ?", key)
-	if result.RowsAffected == 0 {
-		return flagKey, result.Error
-	}
-
-	switch flagKey.FlagType {
-	case "string":
-		return GetFlag[string](key)
-	case "int":
-		return GetFlag[int64](key)
-	case "float":
-		return GetFlag[float64](key)
-	case "bool":
-		return GetFlag[bool](key)
-	default:
-		return nil, nil
-	}
-}
-
-func UpdateFlag(payload payloads.UpdateFlag) error {
+func (s *DBStorage) UpdateFlag(payload payloads.UpdateFlag) error {
 	fmt.Printf("Updating flag state for key %s to %t\n", payload.Key, payload.Enabled)
 	db := database.GetDB()
 
@@ -125,7 +114,7 @@ func UpdateFlag(payload payloads.UpdateFlag) error {
 	return nil
 }
 
-func CreateFlag[T comparable](key string, flagType string, variations []payloads.FlagVariation) {
+func CreateFlag[T comparable](key string, flagType string, variations []payloads.FlagVariation) error {
 	fmt.Printf("Setting flag value for key %s\n", key)
 	db := database.GetDB()
 	var flagKey database.FlagKey
@@ -143,7 +132,10 @@ func CreateFlag[T comparable](key string, flagType string, variations []payloads
 			Enabled:     false,
 			LastUpdated: &now,
 		}
-		db.Create(newFlag)
+		result = db.Create(newFlag)
+		if result.Error != nil {
+			return result.Error
+		}
 		for _, value := range variations {
 			variationUUID := uuid.NewString()
 			variation := database.FlagVariation[T]{
@@ -153,7 +145,10 @@ func CreateFlag[T comparable](key string, flagType string, variations []payloads
 				Name:        value.Name,
 				LastUpdated: &now,
 			}
-			db.Scopes(database.GetTableName(variation)).Create(variation)
+			result = db.Scopes(database.GetTableName(variation)).Create(variation)
+			if result.Error != nil {
+				return result.Error
+			}
 			uuids = append(uuids, variationUUID)
 		}
 		lenVariations := len(uuids)
@@ -161,6 +156,7 @@ func CreateFlag[T comparable](key string, flagType string, variations []payloads
 		newFlag.DefaultVariation = uuids[lenVariations-1]
 		db.Save(newFlag)
 	}
+	return nil
 }
 
 func GetFlag[T comparable](key string) (T, error) {

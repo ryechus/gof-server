@@ -7,7 +7,6 @@ import (
 	"github.com/placer14/gof-server/internal/config"
 	"github.com/placer14/gof-server/internal/database"
 	"github.com/placer14/gof-server/internal/handlers/payloads"
-	"github.com/placer14/gof-server/internal/storage"
 	"gopkg.in/go-playground/validator.v8"
 )
 
@@ -237,6 +236,10 @@ func GetFlag(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateFlag(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ctx_storage := ctx.Value(config.KeyVariable)
+	storageType := ctx_storage.(*config.FlagStorageType)
+
 	validate := validator.New(ValidatorConfig)
 	var input payloads.UpdateFlag
 	err := json.NewDecoder(r.Body).Decode(&input)
@@ -252,7 +255,7 @@ func UpdateFlag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = storage.UpdateFlag(input)
+	err = storageType.UpdateFlag(input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -267,6 +270,10 @@ func CreateFlag(w http.ResponseWriter, r *http.Request) {
 	validate := validator.New(ValidatorConfig)
 	var input createFlagPayload
 	err := json.NewDecoder(r.Body).Decode(&input)
+
+	ctx := r.Context()
+	ctx_storage := ctx.Value(config.KeyVariable)
+	storageType := ctx_storage.(*config.FlagStorageType)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -286,16 +293,16 @@ func CreateFlag(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		variations := createVariations[bool](input.Variations)
-		storage.CreateFlag[bool](input.Key, input.FlagType, variations)
+		storageType.CreateBoolFlag(input.Key, input.FlagType, variations)
 	case "string":
 		variations := createVariations[string](input.Variations)
-		storage.CreateFlag[string](input.Key, input.FlagType, variations)
+		storageType.CreateStringFlag(input.Key, input.FlagType, variations)
 	case "float":
 		variations := createVariations[float64](input.Variations)
-		storage.CreateFlag[float64](input.Key, input.FlagType, variations)
+		storageType.CreateFloatFlag(input.Key, input.FlagType, variations)
 	case "int":
 		variations := createVariations[float64](input.Variations)
-		storage.CreateFlag[float64](input.Key, input.FlagType, variations)
+		storageType.CreateIntFlag(input.Key, input.FlagType, variations)
 	}
 
 	w.Header().Set("content-type", "application/json")
