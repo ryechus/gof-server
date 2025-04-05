@@ -267,13 +267,14 @@ func UpdateFlag(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateFlag(w http.ResponseWriter, r *http.Request) {
-	validate := validator.New(ValidatorConfig)
-	var input createFlagPayload
-	err := json.NewDecoder(r.Body).Decode(&input)
-
 	ctx := r.Context()
 	ctx_storage := ctx.Value(config.KeyVariable)
 	storageType := ctx_storage.(*config.FlagStorageType)
+	validate := validator.New(ValidatorConfig)
+	var input createFlagPayload
+	d := json.NewDecoder(r.Body)
+
+	err := d.Decode(&input)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -302,7 +303,7 @@ func CreateFlag(w http.ResponseWriter, r *http.Request) {
 		storageType.CreateFloatFlag(input.Key, input.FlagType, variations)
 	case "int":
 		variations := createVariations[float64](input.Variations)
-		storageType.CreateIntFlag(input.Key, input.FlagType, variations)
+		storageType.CreateFloatFlag(input.Key, input.FlagType, variations)
 	}
 
 	w.Header().Set("content-type", "application/json")
