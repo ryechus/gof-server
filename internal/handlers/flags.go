@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/placer14/gof-server/internal/config"
+	"github.com/placer14/gof-server/internal/database"
 	"github.com/placer14/gof-server/internal/handlers/payloads"
 	"github.com/placer14/gof-server/internal/storage"
 	"gopkg.in/go-playground/validator.v8"
@@ -196,9 +197,31 @@ func SetBoolValue(w http.ResponseWriter, r *http.Request) {
 func GetFlag(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
-	value, err := storage.GetFlagValue(flagKey)
+	ctx := r.Context()
+	ctx_storage := ctx.Value(config.KeyVariable)
+	storageType := ctx_storage.(*config.FlagStorageType)
+
+	dbFlagKey, err := database.GetFlagKey(flagKey)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var value any
+	var _err error
+	switch dbFlagKey.FlagType {
+	case "string":
+		value, _err = storageType.GetString(flagKey)
+	case "int":
+		value, _err = storageType.GetFloat(flagKey)
+	case "float":
+		value, _err = storageType.GetFloat(flagKey)
+	case "bool":
+		value, _err = storageType.GetBool(flagKey)
+	}
+
+	if _err != nil {
+		http.Error(w, _err.Error(), http.StatusInternalServerError)
 		return
 	}
 

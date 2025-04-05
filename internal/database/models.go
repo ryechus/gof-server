@@ -16,6 +16,18 @@ type FlagKey struct {
 	LastUpdated             *time.Time
 }
 
+func GetFlagKey(key string) (FlagKey, error) {
+	db := GetDB()
+	var flagKey FlagKey
+
+	result := db.First(&flagKey, "key = ?", key)
+	if result.RowsAffected == 0 {
+		return flagKey, result.Error
+	}
+
+	return flagKey, nil
+}
+
 type FlagVariation[T comparable] struct {
 	UUID        string `gorm:"primaryKey"`
 	FlagKeyUUID string
