@@ -3,17 +3,26 @@ package database
 import (
 	"time"
 
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
 type FlagKey struct {
-	UUID                    string `gorm:"primaryKey"`
+	UUID                    datatypes.UUID `gorm:"primaryKey"`
 	Key                     string
 	FlagType                string
-	DefaultVariation        string
-	DefaultEnabledVariation string
+	DefaultVariation        datatypes.UUID
+	DefaultEnabledVariation datatypes.UUID
 	Enabled                 bool
 	LastUpdated             *time.Time
+}
+
+type FlagVariation[T comparable] struct {
+	UUID        datatypes.UUID `gorm:"primaryKey"`
+	FlagKeyUUID datatypes.UUID
+	Name        string
+	Value       T
+	LastUpdated *time.Time
 }
 
 func GetFlagKey(key string) (FlagKey, error) {
@@ -28,13 +37,20 @@ func GetFlagKey(key string) (FlagKey, error) {
 	return flagKey, nil
 }
 
-type FlagVariation[T comparable] struct {
-	UUID        string `gorm:"primaryKey"`
-	FlagKeyUUID string
-	Name        string
-	Value       T
-	LastUpdated *time.Time
-}
+// type TargetingRule struct {
+// 	UUID          string `gorm:"primaryKey"`
+// 	Name          string
+// 	VariationUUID string
+// }
+
+// type TargetingRuleContext struct {
+// 	UUID              string `gorm:"primaryKey"`
+// 	TargetingRuleUUID string
+// 	ContextKind       string
+// 	Attribute         string
+// 	Operator          string
+// 	Values            string
+// }
 
 type FlagKeyStringVariations FlagVariation[string]
 

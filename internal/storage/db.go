@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/placer14/gof-server/internal/database"
 	"github.com/placer14/gof-server/internal/handlers/payloads"
+	"gorm.io/datatypes"
 )
 
 type key_db int
@@ -120,13 +120,13 @@ func CreateFlag[T comparable](key string, flagType string, variations []payloads
 	var flagKey database.FlagKey
 
 	result := db.First(&flagKey, "key = ?", key)
-	var uuids []string
+	var uuids []datatypes.UUID
 
 	now := time.Now()
 	if result.RowsAffected == 0 {
-		flag_key_uuid := uuid.New()
+		flag_key_uuid := datatypes.NewUUIDv4()
 		newFlag := database.FlagKey{
-			UUID:        flag_key_uuid.String(),
+			UUID:        flag_key_uuid,
 			FlagType:    flagType,
 			Key:         key,
 			Enabled:     false,
@@ -137,7 +137,7 @@ func CreateFlag[T comparable](key string, flagType string, variations []payloads
 			return result.Error
 		}
 		for _, value := range variations {
-			variationUUID := uuid.NewString()
+			variationUUID := datatypes.NewUUIDv4()
 			variation := database.FlagVariation[T]{
 				UUID:        variationUUID,
 				FlagKeyUUID: newFlag.UUID,
