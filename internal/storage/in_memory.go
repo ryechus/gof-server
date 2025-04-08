@@ -71,3 +71,7 @@ func (s *InMemoryStorage) GetInt(key string) (int64, error) {
 func (s *InMemoryStorage) UpdateFlag(payload payloads.UpdateFlag) error {
 	return nil
 }
+
+func (s *InMemoryStorage) PutRule(payload payloads.PutRule) error {
+	return nil
+}

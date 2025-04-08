@@ -17,4 +17,6 @@ type Storageable interface {
 	CreateIntFlag(key string, flagType string, variations []payloads.FlagVariation) error
 
 	UpdateFlag(payload payloads.UpdateFlag) error
+
+	PutRule(payload payloads.PutRule) error
 }

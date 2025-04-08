@@ -30,6 +30,8 @@ func main() {
 	mux.HandleFunc("POST /createFlag", handlers.CreateFlag)
 	mux.HandleFunc("PUT /updateFlag", handlers.UpdateFlag)
 
+	mux.HandleFunc("PUT /rule", handlers.PutRule)
+
 	fmt.Println("Server is running on http://localhost:23456")
 	ctx := context.Background()
 	server := &http.Server{

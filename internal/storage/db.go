@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/placer14/gof-server/internal/database"
 	"github.com/placer14/gof-server/internal/handlers/payloads"
 	"gorm.io/datatypes"
@@ -111,6 +112,38 @@ func (s *DBStorage) UpdateFlag(payload payloads.UpdateFlag) error {
 	flagKey.Enabled = payload.Enabled
 	db.Save(flagKey)
 
+	return nil
+}
+
+func (s *DBStorage) PutRule(payload payloads.PutRule) error {
+	db := database.GetDB()
+	if payload.UUID == "" {
+		fmt.Printf("creating a new rule %s\n", payload.Name)
+		variationUUID := uuid.MustParse(payload.VariationUUID)
+		rule := database.TargetingRule{
+			UUID:          datatypes.NewUUIDv4(),
+			Name:          payload.Name,
+			VariationUUID: datatypes.UUID(variationUUID),
+		}
+
+		db.Save(rule)
+		for _, ctx := range payload.RuleContexts {
+			fmt.Println("saving contexts")
+			for _, value := range ctx.Values {
+				fmt.Println("saving values")
+				targetingContext := database.TargetingRuleContext{
+					UUID:              datatypes.NewUUIDv4(),
+					TargetingRuleUUID: rule.UUID,
+					ContextKind:       ctx.ContextKind,
+					Attribute:         ctx.Attribute,
+					Value:             value,
+				}
+				db.Save(targetingContext)
+			}
+		}
+	} else {
+		fmt.Printf("updating rule %s\n", payload.Name)
+	}
 	return nil
 }
 

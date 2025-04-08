@@ -15,3 +15,17 @@ type UpdateFlag struct {
 	Key     string `json:"key" validate:"required"`
 	Enabled bool   `json:"enabled"`
 }
+
+type RuleContext struct {
+	ContextKind string   `json:"kind"`
+	Attribute   string   `json:"attribute"`
+	Values      []string `json:"values"`
+}
+
+type PutRule struct {
+	FlagUUID      string        `json:"flag_uuid"`
+	UUID          string        `json:"uuid"`
+	Name          string        `json:"name" validate:"required"`
+	VariationUUID string        `json:"variation_uuid" validate:"required"`
+	RuleContexts  []RuleContext `json:"contexts" validate:"required"`
+}

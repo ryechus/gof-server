@@ -25,6 +25,29 @@ type FlagVariation[T comparable] struct {
 	LastUpdated *time.Time
 }
 
+type TargetingRule struct {
+	UUID          datatypes.UUID `gorm:"primaryKey"`
+	Name          string
+	VariationUUID datatypes.UUID
+}
+
+type TargetingRuleContext struct {
+	UUID              datatypes.UUID `gorm:"primaryKey"`
+	TargetingRuleUUID datatypes.UUID
+	ContextKind       string
+	Attribute         string
+	Operator          string
+	Value             string
+}
+
+type FlagKeyStringVariations FlagVariation[string]
+
+type FlagKeyIntVariations FlagVariation[int64]
+
+type FlagKeyFloatVariations FlagVariation[float64]
+
+type FlagKeyBoolVariations FlagVariation[bool]
+
 func GetFlagKey(key string) (FlagKey, error) {
 	db := GetDB()
 	var flagKey FlagKey
@@ -36,29 +59,6 @@ func GetFlagKey(key string) (FlagKey, error) {
 
 	return flagKey, nil
 }
-
-// type TargetingRule struct {
-// 	UUID          string `gorm:"primaryKey"`
-// 	Name          string
-// 	VariationUUID string
-// }
-
-// type TargetingRuleContext struct {
-// 	UUID              string `gorm:"primaryKey"`
-// 	TargetingRuleUUID string
-// 	ContextKind       string
-// 	Attribute         string
-// 	Operator          string
-// 	Values            string
-// }
-
-type FlagKeyStringVariations FlagVariation[string]
-
-type FlagKeyIntVariations FlagVariation[int64]
-
-type FlagKeyFloatVariations FlagVariation[float64]
-
-type FlagKeyBoolVariations FlagVariation[bool]
 
 func GetTableName[T comparable](variation FlagVariation[T]) func(tx *gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
