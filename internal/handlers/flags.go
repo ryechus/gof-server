@@ -230,7 +230,6 @@ func GetFlag(w http.ResponseWriter, r *http.Request) {
 	var contextualVariation datatypes.UUID
 
 	if input.Context.Attributes != nil {
-		fmt.Println("context is not empty")
 		dbFlagKey, err := database.GetFlagKey(flagKey)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -242,8 +241,6 @@ func GetFlag(w http.ResponseWriter, r *http.Request) {
 		if result.RowsAffected > 0 {
 		outerLoop:
 			for _, fr := range flagRules {
-				fmt.Println(fr)
-
 				allFlagContexts := []database.TargetingRuleContext{}
 				var flagRuleContexts []database.TargetingRuleContext
 				db.Find(&flagRuleContexts, "targeting_rule_uuid = ?", fr.UUID)
