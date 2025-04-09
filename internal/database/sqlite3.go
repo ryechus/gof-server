@@ -10,7 +10,6 @@ import (
 )
 
 func GetDB() *gorm.DB {
-	// os.Remove("./foo.db")
 	db, err := gorm.Open(sqlite.Open("foo2.db"), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)

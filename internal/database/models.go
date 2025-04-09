@@ -61,8 +61,6 @@ func GetFlagKey(key string) (FlagKey, error) {
 	return flagKey, nil
 }
 
-// func GetFlagKeyVariation(variationUUID datatypes.UUID) (Flag)
-
 func GetTableName[T comparable](variation FlagVariation[T]) func(tx *gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
 		switch any(variation).(type) {

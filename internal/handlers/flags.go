@@ -17,8 +17,6 @@ var ValidatorConfig = &validator.Config{TagName: "validate"}
 func GetStringValue(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
-	// responseJson, err := json.Marshal(responseType{Value: provider.StringFlagValues[flagKey].FlagValue})
-
 	ctx := r.Context()
 	ctx_storage := ctx.Value(config.KeyVariable)
 	storageType := ctx_storage.(*config.FlagStorageType)

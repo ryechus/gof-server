@@ -201,17 +201,10 @@ func GetFlag[T comparable](key string) (T, error) {
 
 	result := db.First(&flagKey, "key = ?", key)
 	if result.RowsAffected != 0 {
-		// var flagVariation database.FlagVariation[T]
-		// scope := db.Scopes(database.GetTableName(flagVariation))
 		currentVariation := flagKey.DefaultVariation
 		if flagKey.Enabled {
 			currentVariation = flagKey.DefaultEnabledVariation
 		}
-		// result = scope.First(&flagVariation, "uuid = ?", currentVariation)
-		// if result.RowsAffected != 0 {
-		// 	returnVal = flagVariation.Value
-		// 	return returnVal, nil
-		// }
 		return GetFlagVariation[T](currentVariation)
 	}
 

@@ -9,13 +9,11 @@ import (
 
 	"github.com/placer14/gof-server/internal/config"
 	"github.com/placer14/gof-server/internal/handlers"
-	"github.com/placer14/gof-server/internal/provider"
 )
 
 func main() {
 	mux := http.NewServeMux()
-	provider.PopulateFlagValues()
-	// db := database.GetDB()
+
 	mux.HandleFunc("/ping", handlers.HandlePing)
 	mux.HandleFunc("GET /string/{flagKey}", handlers.GetStringValue)
 	mux.HandleFunc("POST /string/{flagKey}", handlers.SetStringvalue)
@@ -38,7 +36,6 @@ func main() {
 		Addr:    ":23456",
 		Handler: mux,
 		BaseContext: func(l net.Listener) context.Context {
-			// in_mem_storage := storage.NewInMemoryStorage()
 			storageIface := config.FlagStorageIface
 			ctx = context.WithValue(ctx, config.KeyVariable, storageIface)
 			return ctx
