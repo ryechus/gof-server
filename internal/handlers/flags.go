@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/placer14/gof-server/internal/config"
@@ -258,7 +257,6 @@ func GetFlag(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !contextualVariation.IsNil() {
-		fmt.Println("found a match")
 		switch dbFlagKey.FlagType {
 		case "string":
 			value, _err = storage.GetFlagVariation[string](contextualVariation)
