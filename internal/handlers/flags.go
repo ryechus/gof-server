@@ -228,12 +228,7 @@ func GetFlag(w http.ResponseWriter, r *http.Request) {
 	var _err error
 	var contextualVariation datatypes.UUID
 
-	if input.Context.Attributes != nil {
-		dbFlagKey, err := database.GetFlagKey(flagKey)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+	if input.Context.Attributes != nil && dbFlagKey.Enabled {
 		db := database.GetDB()
 		var flagRules []database.TargetingRule
 		result := db.Find(&flagRules, "flag_key_uuid = ?", dbFlagKey.UUID)
