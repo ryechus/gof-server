@@ -2,12 +2,15 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/placer14/gof-server/internal/config"
 	"github.com/placer14/gof-server/internal/database"
 	"github.com/placer14/gof-server/internal/handlers/payloads"
+	"github.com/placer14/gof-server/internal/storage"
 	"gopkg.in/go-playground/validator.v8"
+	"gorm.io/datatypes"
 )
 
 var ValidatorConfig = &validator.Config{TagName: "validate"}
@@ -206,17 +209,80 @@ func GetFlag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	validate := validator.New(ValidatorConfig)
+	var input payloads.GetFlag
+	d := json.NewDecoder(r.Body)
+	err = d.Decode(&input)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = validate.Struct(input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	var value any
 	var _err error
-	switch dbFlagKey.FlagType {
-	case "string":
-		value, _err = storageType.GetString(flagKey)
-	case "int":
-		value, _err = storageType.GetFloat(flagKey)
-	case "float":
-		value, _err = storageType.GetFloat(flagKey)
-	case "bool":
-		value, _err = storageType.GetBool(flagKey)
+	var contextualVariation datatypes.UUID
+
+	if input.Context.Attributes != nil {
+		fmt.Println("context is not empty")
+		dbFlagKey, err := database.GetFlagKey(flagKey)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		db := database.GetDB()
+		var flagRules []database.TargetingRule
+		result := db.Find(&flagRules, "flag_key_uuid = ?", dbFlagKey.UUID)
+		if result.RowsAffected > 0 {
+		outerLoop:
+			for _, fr := range flagRules {
+				fmt.Println(fr)
+
+				allFlagContexts := []database.TargetingRuleContext{}
+				var flagRuleContexts []database.TargetingRuleContext
+				db.Find(&flagRuleContexts, "targeting_rule_uuid = ?", fr.UUID)
+				allFlagContexts = append(allFlagContexts, flagRuleContexts...)
+				for key, value := range input.Context.Attributes {
+					for _, ctx := range allFlagContexts {
+						if ctx.Attribute == key && ctx.Value == value {
+							contextualVariation = fr.VariationUUID
+							break outerLoop
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if !contextualVariation.IsNil() {
+		fmt.Println("found a match")
+		switch dbFlagKey.FlagType {
+		case "string":
+			value, _err = storage.GetFlagVariation[string](contextualVariation)
+		case "int":
+			value, _err = storage.GetFlagVariation[float64](contextualVariation)
+		case "float":
+			value, _err = storage.GetFlagVariation[float64](contextualVariation)
+		case "bool":
+			value, _err = storage.GetFlagVariation[bool](contextualVariation)
+		}
+	} else {
+		switch dbFlagKey.FlagType {
+		case "string":
+			value, _err = storageType.GetString(flagKey)
+		case "int":
+			value, _err = storageType.GetFloat(flagKey)
+		case "float":
+			value, _err = storageType.GetFloat(flagKey)
+		case "bool":
+			value, _err = storageType.GetBool(flagKey)
+		}
 	}
 
 	if _err != nil {

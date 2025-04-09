@@ -120,9 +120,11 @@ func (s *DBStorage) PutRule(payload payloads.PutRule) error {
 	if payload.UUID == "" {
 		fmt.Printf("creating a new rule %s\n", payload.Name)
 		variationUUID := uuid.MustParse(payload.VariationUUID)
+		flagKeyUUID := uuid.MustParse(payload.FlagUUID)
 		rule := database.TargetingRule{
 			UUID:          datatypes.NewUUIDv4(),
 			Name:          payload.Name,
+			FlagKeyUUID:   datatypes.UUID(flagKeyUUID),
 			VariationUUID: datatypes.UUID(variationUUID),
 		}
 
@@ -199,19 +201,34 @@ func GetFlag[T comparable](key string) (T, error) {
 
 	result := db.First(&flagKey, "key = ?", key)
 	if result.RowsAffected != 0 {
-		var flagVariation database.FlagVariation[T]
-		scope := db.Scopes(database.GetTableName(flagVariation))
+		// var flagVariation database.FlagVariation[T]
+		// scope := db.Scopes(database.GetTableName(flagVariation))
 		currentVariation := flagKey.DefaultVariation
 		if flagKey.Enabled {
 			currentVariation = flagKey.DefaultEnabledVariation
 		}
-		result = scope.First(&flagVariation, "uuid = ?", currentVariation)
-		if result.RowsAffected != 0 {
-			returnVal = flagVariation.Value
-			return returnVal, nil
-		}
+		// result = scope.First(&flagVariation, "uuid = ?", currentVariation)
+		// if result.RowsAffected != 0 {
+		// 	returnVal = flagVariation.Value
+		// 	return returnVal, nil
+		// }
+		return GetFlagVariation[T](currentVariation)
 	}
 
+	return returnVal, result.Error
+}
+
+func GetFlagVariation[T comparable](variationUUID datatypes.UUID) (T, error) {
+	db := database.GetDB()
+	var flagVariation database.FlagVariation[T]
+	scope := db.Scopes(database.GetTableName(flagVariation))
+
+	var returnVal T
+	result := scope.First(&flagVariation, "uuid = ?", variationUUID)
+	if result.RowsAffected != 0 {
+		returnVal = flagVariation.Value
+		return returnVal, nil
+	}
 	return returnVal, result.Error
 }
 

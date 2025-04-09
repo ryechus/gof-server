@@ -16,6 +16,15 @@ type UpdateFlag struct {
 	Enabled bool   `json:"enabled"`
 }
 
+type GetFlag struct {
+	Context ContextEvaluation `json:"context"`
+}
+
+type ContextEvaluation struct {
+	Kind       string         `json:"kind"`
+	Attributes map[string]any `json:"attributes"`
+}
+
 type RuleContext struct {
 	ContextKind string   `json:"kind"`
 	Attribute   string   `json:"attribute"`

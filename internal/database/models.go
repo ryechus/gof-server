@@ -28,6 +28,7 @@ type FlagVariation[T comparable] struct {
 type TargetingRule struct {
 	UUID          datatypes.UUID `gorm:"primaryKey"`
 	Name          string
+	FlagKeyUUID   datatypes.UUID
 	VariationUUID datatypes.UUID
 }
 
@@ -59,6 +60,8 @@ func GetFlagKey(key string) (FlagKey, error) {
 
 	return flagKey, nil
 }
+
+// func GetFlagKeyVariation(variationUUID datatypes.UUID) (Flag)
 
 func GetTableName[T comparable](variation FlagVariation[T]) func(tx *gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
