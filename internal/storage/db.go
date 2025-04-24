@@ -115,12 +115,56 @@ func (s *DBStorage) UpdateFlag(payload payloads.UpdateFlag) error {
 	return nil
 }
 
+func verifyFlagVariationExists(flagKeyUUID uuid.UUID, flagVariationUUID uuid.UUID) bool {
+	flagKey, err := database.GetFlagKeyByUUID(flagKeyUUID.String())
+	if err != nil {
+		return false
+	}
+
+	switch flagKey.FlagType {
+	case "bool":
+		var flagVariation database.FlagVariation[bool]
+		flagVariation, err = database.GetFlagKeyVariationByUUID[bool](datatypes.UUID(flagVariationUUID))
+		if err != nil {
+			return false
+		}
+		return flagVariation.FlagKeyUUID != flagKey.UUID
+	case "string":
+		var flagVariation database.FlagVariation[string]
+		flagVariation, err = database.GetFlagKeyVariationByUUID[string](datatypes.UUID(flagVariationUUID))
+		if err != nil {
+			return false
+		}
+		return flagVariation.FlagKeyUUID != flagKey.UUID
+	case "float":
+		var flagVariation database.FlagVariation[float64]
+		flagVariation, err = database.GetFlagKeyVariationByUUID[float64](datatypes.UUID(flagVariationUUID))
+		if err != nil {
+			return false
+		}
+		return flagVariation.FlagKeyUUID != flagKey.UUID
+	case "int":
+		var flagVariation database.FlagVariation[int64]
+		flagVariation, err = database.GetFlagKeyVariationByUUID[int64](datatypes.UUID(flagVariationUUID))
+		if err != nil {
+			return false
+		}
+		return flagVariation.FlagKeyUUID != flagKey.UUID
+	default:
+		return false
+	}
+}
+
 func (s *DBStorage) PutRule(payload payloads.PutRule) error {
 	db := database.GetDB()
 	if payload.UUID == "" {
 		fmt.Printf("creating a new rule %s\n", payload.Name)
 		variationUUID := uuid.MustParse(payload.VariationUUID)
 		flagKeyUUID := uuid.MustParse(payload.FlagUUID)
+		if !verifyFlagVariationExists(flagKeyUUID, variationUUID) {
+			return fmt.Errorf("flag variation %s is not a variation of flag %s", variationUUID, flagKeyUUID)
+		}
+
 		rule := database.TargetingRule{
 			UUID:          datatypes.NewUUIDv4(),
 			Name:          payload.Name,

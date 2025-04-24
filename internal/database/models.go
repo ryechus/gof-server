@@ -61,6 +61,28 @@ func GetFlagKey(key string) (FlagKey, error) {
 	return flagKey, nil
 }
 
+func GetFlagKeyByUUID(flagUUID string) (FlagKey, error) {
+	db := GetDB()
+	var flagKey FlagKey
+
+	result := db.First(&flagKey, "uuid = ?", flagUUID)
+	if result.RowsAffected == 0 {
+		return flagKey, result.Error
+	}
+
+	return flagKey, nil
+}
+
+func GetFlagKeyVariationByUUID[T comparable](variationUUID datatypes.UUID) (FlagVariation[T], error) {
+	db := GetDB()
+	var flagVariation FlagVariation[T]
+	result := db.First(&flagVariation, "uuid = ?", variationUUID.String())
+	if result.RowsAffected == 0 {
+		return flagVariation, result.Error
+	}
+	return flagVariation, nil
+}
+
 func GetTableName[T comparable](variation FlagVariation[T]) func(tx *gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
 		switch any(variation).(type) {

@@ -31,7 +31,10 @@ func PutRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storageType.PutRule(input)
+	err = storageType.PutRule(input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+	}
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
