@@ -267,7 +267,7 @@ func CreateFlag(w http.ResponseWriter, r *http.Request) {
 	ctx_storage := ctx.Value(config.KeyVariable)
 	storageType := ctx_storage.(*config.FlagStorageType)
 	validate := validator.New(ValidatorConfig)
-	var input createFlagPayload
+	var input payloads.CreateFlag
 	d := json.NewDecoder(r.Body)
 
 	err := d.Decode(&input)

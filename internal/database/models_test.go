@@ -49,5 +49,3 @@ func TestGetTableName(t *testing.T) {
 		assert.Equal(t, "flag_key_string_variations", table.Statement.Table)
 	})
 }
-
-func TestMigrateDB(t *testing.T) {}
