@@ -3,18 +3,25 @@ package database
 import (
 	"log"
 
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func GetDB() *gorm.DB {
-	db, err := gorm.Open(sqlite.Open("foo2.db"), &gorm.Config{})
+	dsn := "host=localhost user=postgres password=dbpw dbname=gof_server port=5433 sslmode=disable TimeZone=America/Los_Angeles"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	MigrateDB(db)
+
+	return db
+}
+
+func MigrateDB(db *gorm.DB) {
 	db.AutoMigrate(&FlagKey{})
 	db.AutoMigrate(&FlagKeyStringVariations{})
 	db.AutoMigrate(&FlagKeyBoolVariations{})
@@ -22,6 +29,4 @@ func GetDB() *gorm.DB {
 	db.AutoMigrate(&FlagKeyIntVariations{})
 	db.AutoMigrate(&TargetingRule{})
 	db.AutoMigrate(&TargetingRuleContext{})
-
-	return db
 }
