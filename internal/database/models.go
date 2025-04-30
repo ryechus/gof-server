@@ -69,3 +69,13 @@ func GetTableName[T comparable](variation FlagVariation[T]) func(tx *gorm.DB) *g
 		}
 	}
 }
+
+func MigrateDB(db *gorm.DB) {
+	db.AutoMigrate(&FlagKey{})
+	db.AutoMigrate(&FlagKeyStringVariations{})
+	db.AutoMigrate(&FlagKeyBoolVariations{})
+	db.AutoMigrate(&FlagKeyFloatVariations{})
+	db.AutoMigrate(&FlagKeyIntVariations{})
+	db.AutoMigrate(&TargetingRule{})
+	db.AutoMigrate(&TargetingRuleContext{})
+}

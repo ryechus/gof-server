@@ -20,13 +20,3 @@ func GetDB() *gorm.DB {
 
 	return db
 }
-
-func MigrateDB(db *gorm.DB) {
-	db.AutoMigrate(&FlagKey{})
-	db.AutoMigrate(&FlagKeyStringVariations{})
-	db.AutoMigrate(&FlagKeyBoolVariations{})
-	db.AutoMigrate(&FlagKeyFloatVariations{})
-	db.AutoMigrate(&FlagKeyIntVariations{})
-	db.AutoMigrate(&TargetingRule{})
-	db.AutoMigrate(&TargetingRuleContext{})
-}
