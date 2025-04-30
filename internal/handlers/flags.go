@@ -5,11 +5,8 @@ import (
 	"net/http"
 
 	"github.com/placer14/gof-server/internal/config"
-	"github.com/placer14/gof-server/internal/database"
 	"github.com/placer14/gof-server/internal/handlers/payloads"
-	"github.com/placer14/gof-server/internal/storage"
 	"gopkg.in/go-playground/validator.v8"
-	"gorm.io/datatypes"
 )
 
 var ValidatorConfig = &validator.Config{TagName: "validate"}
@@ -200,78 +197,23 @@ func GetFlag(w http.ResponseWriter, r *http.Request) {
 	ctx_storage := ctx.Value(config.KeyVariable)
 	storageType := ctx_storage.(*config.FlagStorageType)
 
-	dbFlagKey, err := database.GetFlagKey(flagKey)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	validate := validator.New(ValidatorConfig)
 	var input payloads.GetFlag
 	d := json.NewDecoder(r.Body)
-	err = d.Decode(&input)
+	err := d.Decode(&input)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}
 
 	err = validate.Struct(input)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}
 
-	var value any
-	var _err error
-	var contextualVariation datatypes.UUID
-
-	if input.Context.Attributes != nil && dbFlagKey.Enabled {
-		db := database.GetDB()
-		var flagRules []database.TargetingRule
-		result := db.Find(&flagRules, "flag_key_uuid = ?", dbFlagKey.UUID)
-		if result.RowsAffected > 0 {
-		outerLoop:
-			for _, fr := range flagRules {
-				allFlagContexts := []database.TargetingRuleContext{}
-				var flagRuleContexts []database.TargetingRuleContext
-				db.Find(&flagRuleContexts, "targeting_rule_uuid = ?", fr.UUID)
-				allFlagContexts = append(allFlagContexts, flagRuleContexts...)
-				for key, value := range input.Context.Attributes {
-					for _, ctx := range allFlagContexts {
-						if ctx.Attribute == key && ctx.Value == value {
-							contextualVariation = fr.VariationUUID
-							break outerLoop
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if !contextualVariation.IsNil() {
-		switch dbFlagKey.FlagType {
-		case "string":
-			value, _err = storage.GetFlagVariation[string](contextualVariation)
-		case "int":
-			value, _err = storage.GetFlagVariation[float64](contextualVariation)
-		case "float":
-			value, _err = storage.GetFlagVariation[float64](contextualVariation)
-		case "bool":
-			value, _err = storage.GetFlagVariation[bool](contextualVariation)
-		}
-	} else {
-		switch dbFlagKey.FlagType {
-		case "string":
-			value, _err = storageType.GetString(flagKey)
-		case "int":
-			value, _err = storageType.GetFloat(flagKey)
-		case "float":
-			value, _err = storageType.GetFloat(flagKey)
-		case "bool":
-			value, _err = storageType.GetBool(flagKey)
-		}
-	}
+	value, _err := storageType.EvaluateFlag(flagKey, input)
 
 	if _err != nil {
 		http.Error(w, _err.Error(), http.StatusInternalServerError)
@@ -281,7 +223,7 @@ func GetFlag(w http.ResponseWriter, r *http.Request) {
 	responseJson, err := json.Marshal(responseType{Value: value})
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -341,38 +283,9 @@ func CreateFlag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch input.FlagType {
-	case "bool":
-		if len(input.Variations) > 2 {
-			http.Error(w, "can only have two variations for boolean flags", http.StatusBadRequest)
-			return
-		}
-		variations := createVariations[bool](input.Variations)
-		storageType.CreateBoolFlag(input.Key, input.FlagType, variations)
-	case "string":
-		variations := createVariations[string](input.Variations)
-		storageType.CreateStringFlag(input.Key, input.FlagType, variations)
-	case "float":
-		variations := createVariations[float64](input.Variations)
-		storageType.CreateFloatFlag(input.Key, input.FlagType, variations)
-	case "int":
-		variations := createVariations[float64](input.Variations)
-		storageType.CreateFloatFlag(input.Key, input.FlagType, variations)
-	}
+	storageType.CreateFlag(input.Key, input.FlagType, input.Variations)
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 	_, _ = w.Write([]byte(""))
-}
-
-func createVariations[T comparable](variations []flagVariation) []payloads.FlagVariation {
-	var castedVariations []payloads.FlagVariation
-	for _, variation := range variations {
-		as_bool, ok := variation.Value.(T)
-		if !ok {
-			panic("there was a problem casting flag variations")
-		}
-		castedVariations = append(castedVariations, payloads.FlagVariation{Value: as_bool, Name: variation.Name})
-	}
-	return castedVariations
 }

@@ -75,3 +75,7 @@ func (s *InMemoryStorage) UpdateFlag(payload payloads.UpdateFlag) error {
 func (s *InMemoryStorage) PutRule(payload payloads.PutRule) error {
 	return nil
 }
+
+func (s *InMemoryStorage) EvaluateFlag(key string, payload payloads.GetFlag) (any, error) {
+	return nil, nil
+}

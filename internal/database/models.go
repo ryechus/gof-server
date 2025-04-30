@@ -15,6 +15,8 @@ type FlagKey struct {
 	DefaultEnabledVariation datatypes.UUID
 	Enabled                 bool
 	LastUpdated             *time.Time
+	// CreatedAt               *time.Time
+	// UpdatedAt               *time.Time
 }
 
 type FlagVariation[T comparable] struct {
@@ -23,6 +25,8 @@ type FlagVariation[T comparable] struct {
 	Name        string
 	Value       T
 	LastUpdated *time.Time
+	// CreatedAt   *time.Time
+	// UpdatedAt   *time.Time
 }
 
 type TargetingRule struct {
