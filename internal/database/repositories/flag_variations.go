@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/placer14/gof-server/internal/database"
 	"github.com/placer14/gof-server/internal/handlers/payloads"
@@ -41,7 +41,7 @@ func (fvr *FlagVariationRepository[T]) CreateFlagKeyVariation(newFlag FlagKey, v
 		Name:        value.Name,
 	}
 	result := db.Scopes(database.GetTableName(variation)).Create(variation)
-	fmt.Printf("created flag key variation %s with value %v for flag key %s\n", variationUUID, value.Value.(T), newFlag.UUID.String())
+	log.Printf("created flag key variation %s with value %v for flag key %s\n", variationUUID, value.Value.(T), newFlag.UUID.String())
 
 	return variation, result
 }

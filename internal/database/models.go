@@ -34,6 +34,7 @@ type TargetingRule struct {
 	Name          string
 	FlagKeyUUID   datatypes.UUID
 	VariationUUID datatypes.UUID
+	Attributes    datatypes.JSON
 }
 
 type TargetingRuleContext struct {

@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"fmt"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/placer14/gof-server/internal/database"
@@ -32,31 +32,28 @@ func (rr *RuleRepository) GetTargetingRuleContexts(targetingRuleUUID datatypes.U
 	return flagRuleContexts, result
 }
 
-func (rr *RuleRepository) SaveTargetingRule(payload payloads.PutRule) {
+func (rr *RuleRepository) SaveTargetingRule(payload payloads.PutRule) error {
 	db := rr.DB
 	variationUUID := datatypes.UUID(uuid.MustParse(payload.VariationUUID))
 	flagKeyUUID := datatypes.UUID(uuid.MustParse(payload.FlagUUID))
+	jsonRuleContexts, err := json.Marshal(payload.RuleContexts)
+	if err != nil {
+		return err
+	}
+
+	ruleUUID := datatypes.NewUUIDv4()
+	if payload.UUID != "" {
+		ruleUUID = datatypes.UUID(uuid.MustParse(payload.UUID))
+	}
 
 	rule := database.TargetingRule{
-		UUID:          datatypes.NewUUIDv4(),
+		UUID:          ruleUUID,
 		Name:          payload.Name,
 		FlagKeyUUID:   flagKeyUUID,
 		VariationUUID: variationUUID,
+		Attributes:    datatypes.JSON([]byte(jsonRuleContexts)),
 	}
 
 	db.Save(rule)
-	for _, ctx := range payload.RuleContexts {
-		fmt.Println("saving contexts")
-		for _, value := range ctx.Values {
-			fmt.Println("saving values")
-			targetingContext := database.TargetingRuleContext{
-				UUID:              datatypes.NewUUIDv4(),
-				TargetingRuleUUID: rule.UUID,
-				ContextKind:       ctx.ContextKind,
-				Attribute:         ctx.Attribute,
-				Value:             value,
-			}
-			db.Save(targetingContext)
-		}
-	}
+	return nil
 }
