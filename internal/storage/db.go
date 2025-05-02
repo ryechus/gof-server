@@ -40,14 +40,6 @@ func NewDBStorage() *DBStorage {
 	}
 }
 
-func (s *DBStorage) GetBool(key string) (bool, error) { return GetFlag[bool](key) }
-
-func (s *DBStorage) GetInt(key string) (int64, error) { return GetFlag[int64](key) }
-
-func (s *DBStorage) GetFloat(key string) (float64, error) { return GetFlag[float64](key) }
-
-func (s *DBStorage) GetString(key string) (string, error) { return GetFlag[string](key) }
-
 func hasMatchingRules(flagRuleContexts []payloads.RuleContext, attributes map[string]any) bool {
 	for key, value := range attributes {
 		for _, ctx := range flagRuleContexts {
@@ -245,35 +237,4 @@ func (s *DBStorage) CreateFlag(key string, flagType string, variations []payload
 	gormTx.Commit()
 
 	return nil
-}
-
-func GetFlag[T comparable](key string) (T, error) {
-	db := database.GetDB()
-	var flagKey database.FlagKey
-	var returnVal T
-
-	result := db.First(&flagKey, "key = ?", key)
-	if result.RowsAffected != 0 {
-		currentVariation := flagKey.DefaultVariation
-		if flagKey.Enabled {
-			currentVariation = flagKey.DefaultEnabledVariation
-		}
-		return GetFlagVariation[T](currentVariation)
-	}
-
-	return returnVal, result.Error
-}
-
-func GetFlagVariation[T comparable](variationUUID datatypes.UUID) (T, error) {
-	db := database.GetDB()
-	var flagVariation database.FlagVariation[T]
-	scope := db.Scopes(database.GetTableName(flagVariation))
-
-	var returnVal T
-	result := scope.First(&flagVariation, "uuid = ?", variationUUID)
-	if result.RowsAffected != 0 {
-		returnVal = flagVariation.Value
-		return returnVal, nil
-	}
-	return returnVal, result.Error
 }
