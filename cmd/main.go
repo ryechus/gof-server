@@ -14,16 +14,9 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/ping", handlers.HandlePing)
-	// mux.HandleFunc("GET /string/{flagKey}", handlers.GetStringValue)
-	// mux.HandleFunc("POST /string/{flagKey}", handlers.SetStringvalue)
-	// mux.HandleFunc("GET /float/{flagKey}", handlers.GetFloatValue)
-	// mux.HandleFunc("POST /float/{flagKey}", handlers.SetFloatValue)
-	// mux.HandleFunc("GET /int/{flagKey}", handlers.GetIntValue)
-	// mux.HandleFunc("POST /int/{flagKey}", handlers.SetIntValue)
-	// mux.HandleFunc("GET /bool/{flagKey}", handlers.GetBoolValue)
-	// mux.HandleFunc("POST /bool/{flagKey}", handlers.SetBoolValue)
 
-	mux.HandleFunc("GET /evaluateFlag/{flagKey}", handlers.GetFlag)
+	mux.HandleFunc("POST /evaluateFlag/{flagKey}", handlers.EvaluateFlag)
+
 	mux.HandleFunc("POST /createFlag", handlers.CreateFlag)
 	mux.HandleFunc("PUT /updateFlag", handlers.UpdateFlag)
 

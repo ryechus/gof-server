@@ -61,6 +61,7 @@ func hasMatchingRules(flagRuleContexts []payloads.RuleContext, attributes map[st
 
 func (s *DBStorage) EvaluateFlag(key string, payload payloads.GetFlag) (any, error) {
 	flagKey, result := s.flagRepository.GetFlagKey(key)
+	log.Printf("evaluating %v", flagKey)
 	if result.RowsAffected == 0 {
 		return nil, result.Error
 	}
@@ -69,6 +70,7 @@ func (s *DBStorage) EvaluateFlag(key string, payload payloads.GetFlag) (any, err
 	var contextualVariation datatypes.UUID
 
 	if payload.Context.Attributes != nil && flagKey.Enabled {
+		log.Println("evaluating context")
 		flagRules, result := s.flagRulesRepository.GetTargetingRules(flagKey.UUID)
 		if result.RowsAffected > 0 {
 			for _, fr := range flagRules {
@@ -86,28 +88,22 @@ func (s *DBStorage) EvaluateFlag(key string, payload payloads.GetFlag) (any, err
 		}
 	}
 
-	if !contextualVariation.IsNil() {
-		switch flagKey.FlagType {
-		case "string":
-			value, _err = s.stringVariationRepository.GetFlagVariationValue(contextualVariation)
-		case "int":
-			value, _err = s.intVariationRepository.GetFlagVariationValue(contextualVariation)
-		case "float":
-			value, _err = s.floatVariationRepository.GetFlagVariationValue(contextualVariation)
-		case "bool":
-			value, _err = s.boolVariationRepository.GetFlagVariationValue(contextualVariation)
+	if contextualVariation.IsNil() {
+		contextualVariation = flagKey.DefaultVariation
+		if flagKey.Enabled {
+			contextualVariation = flagKey.DefaultEnabledVariation
 		}
-	} else { // TODO MAKE THIS BRANCH GO AWAY
-		switch flagKey.FlagType {
-		case "string":
-			value, _err = s.GetString(flagKey.Key)
-		case "int":
-			value, _err = s.GetFloat(flagKey.Key)
-		case "float":
-			value, _err = s.GetFloat(flagKey.Key)
-		case "bool":
-			value, _err = s.GetBool(flagKey.Key)
-		}
+	}
+
+	switch flagKey.FlagType {
+	case "string":
+		value, _err = s.stringVariationRepository.GetFlagVariationValue(contextualVariation)
+	case "int":
+		value, _err = s.intVariationRepository.GetFlagVariationValue(contextualVariation)
+	case "float":
+		value, _err = s.floatVariationRepository.GetFlagVariationValue(contextualVariation)
+	case "bool":
+		value, _err = s.boolVariationRepository.GetFlagVariationValue(contextualVariation)
 	}
 	return value, _err
 }
@@ -120,8 +116,12 @@ func (s *DBStorage) UpdateFlag(payload payloads.UpdateFlag) error {
 	if result.RowsAffected == 0 {
 		return result.Error
 	}
+	gormTx := s.flagRepository.DB.Begin()
+
+	gormTx.Begin()
 	flagKey.Enabled = payload.Enabled
-	s.flagRepository.UpdateFlagKey(&flagKey)
+	s.flagRepository.UpdateFlagKey(&flagKey, gormTx)
+	gormTx.Commit()
 
 	return nil
 }
@@ -173,11 +173,14 @@ func (s *DBStorage) PutRule(payload payloads.PutRule) error {
 	if !variationExists {
 		return fmt.Errorf("flag variation %s is not a variation of flag %s", payload.VariationUUID, payload.FlagUUID)
 	}
+	gormTx := s.flagRulesRepository.DB.Begin()
 
-	err = s.flagRulesRepository.SaveTargetingRule(payload)
+	err = s.flagRulesRepository.SaveTargetingRule(payload, gormTx)
 	if err != nil {
 		return err
 	}
+
+	gormTx.Commit()
 
 	return nil
 }
@@ -188,9 +191,14 @@ func (s *DBStorage) CreateFlag(key string, flagType string, variations []payload
 	if result.RowsAffected > 0 {
 		return fmt.Errorf("unable to create flag with key %s", key)
 	}
+	gormTx := s.flagRepository.DB.Begin()
 
 	var uuids []datatypes.UUID
-	flagKey, _ := s.flagRepository.CreateFlagKey(flagType, key)
+	flagKey, result := s.flagRepository.CreateFlagKey(flagType, key, gormTx)
+	if result.Error != nil {
+		gormTx.Rollback()
+		return result.Error
+	}
 
 	if flagType == "bool" && len(variations) > 2 {
 		return fmt.Errorf("can only have two variations for boolean flags")
@@ -199,16 +207,32 @@ func (s *DBStorage) CreateFlag(key string, flagType string, variations []payload
 	for _, value := range variations {
 		switch flagKey.FlagType {
 		case "bool":
-			flagVariation, _ := s.boolVariationRepository.CreateFlagKeyVariation(flagKey, value)
+			flagVariation, result := s.boolVariationRepository.CreateFlagKeyVariation(flagKey, value, gormTx)
+			if result.Error != nil {
+				gormTx.Rollback()
+				return result.Error
+			}
 			uuids = append(uuids, flagVariation.UUID)
 		case "string":
-			flagVariation, _ := s.stringVariationRepository.CreateFlagKeyVariation(flagKey, value)
+			flagVariation, result := s.stringVariationRepository.CreateFlagKeyVariation(flagKey, value, gormTx)
+			if result.Error != nil {
+				gormTx.Rollback()
+				return result.Error
+			}
 			uuids = append(uuids, flagVariation.UUID)
 		case "float":
-			flagVariation, _ := s.floatVariationRepository.CreateFlagKeyVariation(flagKey, value)
+			flagVariation, result := s.floatVariationRepository.CreateFlagKeyVariation(flagKey, value, gormTx)
+			if result.Error != nil {
+				gormTx.Rollback()
+				return result.Error
+			}
 			uuids = append(uuids, flagVariation.UUID)
 		case "int":
-			flagVariation, _ := s.intVariationRepository.CreateFlagKeyVariation(flagKey, value)
+			flagVariation, result := s.intVariationRepository.CreateFlagKeyVariation(flagKey, value, gormTx)
+			if result.Error != nil {
+				gormTx.Rollback()
+				return result.Error
+			}
 			uuids = append(uuids, flagVariation.UUID)
 		}
 	}
@@ -217,7 +241,8 @@ func (s *DBStorage) CreateFlag(key string, flagType string, variations []payload
 	flagKey.DefaultEnabledVariation = uuids[0]
 	flagKey.DefaultVariation = uuids[lenVariations-1]
 
-	s.flagRepository.UpdateFlagKey(&flagKey)
+	s.flagRepository.UpdateFlagKey(&flagKey, gormTx)
+	gormTx.Commit()
 
 	return nil
 }

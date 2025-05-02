@@ -19,21 +19,21 @@ var _ Repository = &RuleRepository{}
 func (rr *RuleRepository) GetTargetingRules(flagKeyUUID datatypes.UUID) ([]database.TargetingRule, *gorm.DB) {
 	db := rr.DB
 	var flagRules []database.TargetingRule
-	result := db.Find(&flagRules, "flag_key_uuid = ?", flagKeyUUID.String())
+	result := db.Raw("SELECT uuid, name, flag_key_uuid, variation_uuid, attributes FROM targeting_rules WHERE flag_key_uuid = ?", flagKeyUUID.String()).Scan(&flagRules)
 
 	return flagRules, result
 }
 
-func (rr *RuleRepository) GetTargetingRuleContexts(targetingRuleUUID datatypes.UUID) ([]database.TargetingRuleContext, *gorm.DB) {
-	db := rr.DB
-	var flagRuleContexts []database.TargetingRuleContext
-	result := db.Find(&flagRuleContexts, "targeting_rule_uuid = ?", targetingRuleUUID.String())
+// func (rr *RuleRepository) GetTargetingRuleContexts(targetingRuleUUID datatypes.UUID) ([]database.TargetingRuleContext, *gorm.DB) {
+// 	db := rr.DB
+// 	var flagRuleContexts []database.TargetingRuleContext
+// 	result := db.Find(&flagRuleContexts, "targeting_rule_uuid = ?", targetingRuleUUID.String())
 
-	return flagRuleContexts, result
-}
+// 	return flagRuleContexts, result
+// }
 
-func (rr *RuleRepository) SaveTargetingRule(payload payloads.PutRule) error {
-	db := rr.DB
+func (rr *RuleRepository) SaveTargetingRule(payload payloads.PutRule, tx *gorm.DB) error {
+	db := tx
 	variationUUID := datatypes.UUID(uuid.MustParse(payload.VariationUUID))
 	flagKeyUUID := datatypes.UUID(uuid.MustParse(payload.FlagUUID))
 	jsonRuleContexts, err := json.Marshal(payload.RuleContexts)
@@ -54,6 +54,12 @@ func (rr *RuleRepository) SaveTargetingRule(payload payloads.PutRule) error {
 		Attributes:    datatypes.JSON([]byte(jsonRuleContexts)),
 	}
 
-	db.Save(rule)
+	query := "INSERT INTO targeting_rules (uuid, name, flag_key_uuid, variation_uuid, attributes) VALUES (?, ?, ?, ?, ?)"
+	result := db.Raw(query, rule.UUID, rule.Name, rule.FlagKeyUUID, rule.VariationUUID, rule.Attributes).Scan(&rule)
+
+	if result.Error != nil {
+		db.Rollback()
+		return result.Error
+	}
 	return nil
 }

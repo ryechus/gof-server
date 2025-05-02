@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/placer14/gof-server/internal/database"
@@ -23,16 +24,18 @@ var _ Repository = &FlagVariationRepository[bool]{}
 func (fvr *FlagVariationRepository[T]) GetFlagKeyVariationByUUID(variationUUID datatypes.UUID) (database.FlagVariation[T], error) {
 	db := fvr.DB
 	var flagVariation database.FlagVariation[T]
-	scope := db.Scopes(database.GetTableName(flagVariation))
-	result := scope.First(&flagVariation, "uuid = ?", variationUUID.String())
+	scope := database.GetTableName(flagVariation)(db)
+	query := fmt.Sprintf("SELECT uuid, flag_key_uuid, name, value, last_updated FROM %s WHERE uuid = ?",
+		scope.Statement.Table)
+	result := db.Raw(query, variationUUID.String()).Scan(&flagVariation)
 	if result.RowsAffected == 0 {
 		return flagVariation, result.Error
 	}
 	return flagVariation, nil
 }
 
-func (fvr *FlagVariationRepository[T]) CreateFlagKeyVariation(newFlag FlagKey, value payloads.FlagVariation) (database.FlagVariation[T], *gorm.DB) {
-	db := fvr.DB
+func (fvr *FlagVariationRepository[T]) CreateFlagKeyVariation(newFlag FlagKey, value payloads.FlagVariation, tx *gorm.DB) (database.FlagVariation[T], *gorm.DB) {
+	db := tx
 	variationUUID := datatypes.NewUUIDv4()
 	variation := database.FlagVariation[T]{
 		UUID:        variationUUID,
@@ -40,7 +43,10 @@ func (fvr *FlagVariationRepository[T]) CreateFlagKeyVariation(newFlag FlagKey, v
 		Value:       value.Value.(T),
 		Name:        value.Name,
 	}
-	result := db.Scopes(database.GetTableName(variation)).Create(variation)
+	scope := database.GetTableName(variation)(db)
+	query := fmt.Sprintf("INSERT INTO %s (uuid, flag_key_uuid, value, name) VALUES (?, ?, ?, ?)", scope.Statement.Table)
+	result := db.Raw(query, variation.UUID, variation.FlagKeyUUID, variation.Value, variation.Name).Scan(&variation)
+
 	log.Printf("created flag key variation %s with value %v for flag key %s\n", variationUUID, value.Value.(T), newFlag.UUID.String())
 
 	return variation, result
@@ -49,10 +55,12 @@ func (fvr *FlagVariationRepository[T]) CreateFlagKeyVariation(newFlag FlagKey, v
 func (fvr *FlagVariationRepository[T]) GetFlagVariationValue(variationUUID datatypes.UUID) (T, error) {
 	db := fvr.DB
 	var flagVariation database.FlagVariation[T]
-	scope := db.Scopes(database.GetTableName(flagVariation))
+	scope := database.GetTableName(flagVariation)(db)
 
 	var returnVal T
-	result := scope.First(&flagVariation, "uuid = ?", variationUUID)
+	query := fmt.Sprintf("SELECT uuid, flag_key_uuid, name, value, last_updated FROM %s WHERE uuid = ?",
+		scope.Statement.Table)
+	result := db.Raw(query, variationUUID.String()).Scan(&flagVariation)
 	if result.RowsAffected != 0 {
 		returnVal = flagVariation.Value
 		return returnVal, nil

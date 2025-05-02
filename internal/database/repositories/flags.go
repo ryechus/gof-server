@@ -23,7 +23,8 @@ func (fr *FlagRepository) GetFlagKey(key string) (FlagKey, *gorm.DB) {
 	var flagKey FlagKey
 	db := fr.DB
 
-	result := db.First(&flagKey, "key = ?", key)
+	// result := db.First(&flagKey, "key = ?", key)
+	result := db.Raw("SELECT uuid, key, flag_type, default_variation, default_enabled_variation, enabled FROM flag_keys WHERE key = ?", key).Scan(&flagKey)
 
 	return flagKey, result
 }
@@ -37,8 +38,8 @@ func (fr *FlagRepository) GetFlagKeyByUUID(flagUUID string) (FlagKey, *gorm.DB) 
 	return flagKey, result
 }
 
-func (fr *FlagRepository) CreateFlagKey(flagType, key string) (FlagKey, *gorm.DB) {
-	db := fr.DB
+func (fr *FlagRepository) CreateFlagKey(flagType, key string, tx *gorm.DB) (FlagKey, *gorm.DB) {
+	db := tx
 	flag_key_uuid := datatypes.NewUUIDv4()
 	newFlag := database.FlagKey{
 		UUID:     flag_key_uuid,
@@ -46,11 +47,12 @@ func (fr *FlagRepository) CreateFlagKey(flagType, key string) (FlagKey, *gorm.DB
 		Key:      key,
 		Enabled:  false,
 	}
-	result := db.Create(newFlag)
+	query := "INSERT INTO flag_keys (uuid, flag_type, key, enabled) VALUES (?, ?, ?, ?)"
+	result := db.Raw(query, newFlag.UUID, newFlag.FlagType, newFlag.Key, newFlag.Enabled).Scan(&newFlag)
 	return newFlag, result
 }
 
-func (fr *FlagRepository) UpdateFlagKey(flagKey *FlagKey) {
-	db := fr.DB
+func (fr *FlagRepository) UpdateFlagKey(flagKey *FlagKey, tx *gorm.DB) {
+	db := tx
 	db.Save(flagKey)
 }

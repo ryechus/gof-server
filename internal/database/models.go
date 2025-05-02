@@ -9,7 +9,7 @@ import (
 
 type FlagKey struct {
 	UUID                    datatypes.UUID `gorm:"primaryKey"`
-	Key                     string
+	Key                     string         `gorm:"index"`
 	FlagType                string
 	DefaultVariation        datatypes.UUID
 	DefaultEnabledVariation datatypes.UUID

@@ -11,7 +11,7 @@ import (
 
 var ValidatorConfig = &validator.Config{TagName: "validate"}
 
-func GetFlag(w http.ResponseWriter, r *http.Request) {
+func EvaluateFlag(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
 
 	ctx := r.Context()
@@ -104,7 +104,11 @@ func CreateFlag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storageType.CreateFlag(input.Key, input.FlagType, input.Variations)
+	err = storageType.CreateFlag(input.Key, input.FlagType, input.Variations)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusNoContent)

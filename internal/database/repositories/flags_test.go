@@ -17,16 +17,9 @@ func TestGetFlagKey(t *testing.T) {
 
 	flagKeyString := "test"
 	columns := []string{"uuid", "key", "flag_type", "default_variation", "default_enabled_variation", "enabled", "last_updated"}
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "flag_keys" WHERE key = $1 ORDER BY "flag_keys"."uuid" LIMIT $2`)).
-		WithArgs(flagKeyString, 1).
-		WillReturnRows(sqlmock.NewRows(columns).AddRow(
-			datatypes.NewUUIDv4().String(),
-			"bert",
-			"string",
-			datatypes.NewUUIDv4().String(),
-			datatypes.NewUUIDv4().String(),
-			false,
-			time.Now()))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT uuid, key, flag_type, default_variation, default_enabled_variation, enabled FROM flag_keys WHERE key = $1`)).
+		WithArgs(flagKeyString).
+		WillReturnRows(sqlmock.NewRows(columns))
 
 	flagRepository := repositories.FlagRepository{DB: gormDB}
 
@@ -68,14 +61,14 @@ func TestCreateFlagKey(t *testing.T) {
 	defer db.Close()
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "flag_keys" ("uuid","key","flag_type","default_variation","default_enabled_variation","enabled","last_updated") VALUES ($1,$2,$3,$4,$5,$6,$7)`)).
-		WithArgs(sqlmock.AnyArg(), "test", "bool", sqlmock.AnyArg(), sqlmock.AnyArg(), false, sqlmock.AnyArg()).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectCommit()
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO flag_keys (uuid, flag_type, key, enabled) VALUES ($1, $2, $3, $4)`)).
+		WithArgs(sqlmock.AnyArg(), "bool", "test", false).
+		WillReturnRows(sqlmock.NewRows([]string{}))
 
 	flagRepository := repositories.FlagRepository{DB: gormDB}
 
-	flagRepository.CreateFlagKey("bool", "test")
+	gormTx := gormDB.Begin()
+	flagRepository.CreateFlagKey("bool", "test", gormTx)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -99,11 +92,11 @@ func TestUpdateFlagKey(t *testing.T) {
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "flag_keys" SET "key"=$1,"flag_type"=$2,"default_variation"=$3,"default_enabled_variation"=$4,"enabled"=$5,"last_updated"=$6 WHERE "uuid" = $7`)).
 		WithArgs(flagKey.Key, flagKey.FlagType, flagKey.DefaultVariation, flagKey.DefaultEnabledVariation, flagKey.Enabled, flagKey.LastUpdated, flagKey.UUID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectCommit()
 
 	flagRepository := repositories.FlagRepository{DB: gormDB}
 
-	flagRepository.UpdateFlagKey(&flagKey)
+	gormTx := gormDB.Begin()
+	flagRepository.UpdateFlagKey(&flagKey, gormTx)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
