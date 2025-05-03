@@ -54,7 +54,7 @@ func (fr *FlagRepository) CreateFlagKey(flagType, key string, tx *gorm.DB) (Flag
 		Key:      key,
 		Enabled:  false,
 	}
-	query := "INSERT INTO flag_keys (uuid, name, flag_type, key, enabled) VALUES (?, ?, ?, ?)"
+	query := "INSERT INTO flag_keys (uuid, name, flag_type, key, enabled) VALUES (?, ?, ?, ?, ?)"
 	result := db.Raw(query, newFlag.UUID, newFlag.Name, newFlag.FlagType, newFlag.Key, newFlag.Enabled).Scan(&newFlag)
 	return newFlag, result
 }

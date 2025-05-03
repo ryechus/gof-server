@@ -36,7 +36,7 @@ func main() {
 	var portNumber int
 	var host string
 	flag.IntVar(&portNumber, "port-number", 23456, "port number of server")
-	flag.StringVar(&host, "host", "", "host of the server")
+	flag.StringVar(&host, "host", "127.0.0.1", "host of the server")
 	flag.Parse()
 
 	log.Printf("Server is running on http://%s:%d", host, portNumber)

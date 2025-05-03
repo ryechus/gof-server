@@ -246,6 +246,12 @@ func (s *DBStorage) GetFlagWithVariations(key string) (payloads.FlagRepresentati
 	if result.RowsAffected == 0 {
 		return response, result.Error
 	}
+	if flagKey.Name == nil {
+		flagKey.Name = new(string)
+	}
+	if flagKey.Description == nil {
+		flagKey.Description = new(string)
+	}
 	response.FlagUUID = flagKey.UUID.String()
 	response.Key = flagKey.Key
 	response.Name = *flagKey.Name
