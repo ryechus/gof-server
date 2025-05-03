@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -13,7 +15,6 @@ import (
 )
 
 func main() {
-	// mux := http.NewServeMux()
 	chi_r := chi.NewRouter()
 
 	chi_r.Use(middleware.Logger)
@@ -32,10 +33,16 @@ func main() {
 	// variations
 	chi_r.Get("/getVariations/{flagKey}", handlers.GetFlagVariations)
 
-	log.Println("Server is running on http://localhost:23456")
+	var portNumber int
+	var host string
+	flag.IntVar(&portNumber, "port-number", 23456, "port number of server")
+	flag.StringVar(&host, "host", "", "host of the server")
+	flag.Parse()
+
+	log.Printf("Server is running on http://%s:%d", host, portNumber)
 	ctx := context.Background()
 	server := &http.Server{
-		Addr:    ":23456",
+		Addr:    fmt.Sprintf("%s:%d", host, portNumber),
 		Handler: chi_r,
 		BaseContext: func(l net.Listener) context.Context {
 			storageIface := config.FlagStorageIface
