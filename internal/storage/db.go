@@ -113,6 +113,12 @@ func (s *DBStorage) UpdateFlag(payload payloads.UpdateFlag) error {
 	flagKey.Enabled = payload.Enabled
 	flagKey.Name = &payload.Name
 	flagKey.Description = &payload.Description
+	if payload.DefaultVariation != "" {
+		flagKey.DefaultVariation = datatypes.UUID(uuid.MustParse(payload.DefaultVariation))
+	}
+	if payload.DefaultEnabledVariation != "" {
+		flagKey.DefaultEnabledVariation = datatypes.UUID(uuid.MustParse(payload.DefaultEnabledVariation))
+	}
 	s.flagRepository.UpdateFlagKey(&flagKey, gormTx)
 	gormTx.Commit()
 
