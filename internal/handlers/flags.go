@@ -139,3 +139,27 @@ func CreateFlag(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 	_, _ = w.Write([]byte(""))
 }
+
+func GetFlagVariations(w http.ResponseWriter, r *http.Request) {
+	flagKey := r.PathValue("flagKey")
+	ctx := r.Context()
+	ctx_storage := ctx.Value(config.KeyVariable)
+	storageType := ctx_storage.(*config.FlagStorageType)
+
+	response, err := storageType.GetFlagVariations(flagKey)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	responseJson, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(responseJson))
+}

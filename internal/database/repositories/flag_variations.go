@@ -67,3 +67,16 @@ func (fvr *FlagVariationRepository[T]) GetFlagVariationValue(variationUUID datat
 	}
 	return returnVal, result.Error
 }
+
+func (fvr *FlagVariationRepository[T]) GetFlagVariations(flagKeyUUID datatypes.UUID) ([]database.FlagVariation[T], error) {
+	db := fvr.DB
+	var flagVariations []database.FlagVariation[T]
+	scope := database.GetTableName(database.FlagVariation[T]{})(db)
+	query := fmt.Sprintf("SELECT uuid, flag_key_uuid, name, value FROM %s WHERE flag_key_uuid = ?",
+		scope.Statement.Table)
+	result := db.Raw(query, flagKeyUUID.String()).Scan(&flagVariations)
+	if result.RowsAffected == 0 {
+		return flagVariations, result.Error
+	}
+	return flagVariations, nil
+}

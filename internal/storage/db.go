@@ -306,3 +306,62 @@ func (s *DBStorage) GetFlagWithVariations(key string) (payloads.FlagRepresentati
 	}
 	return response, nil
 }
+
+func (s *DBStorage) GetFlagVariations(key string) ([]payloads.FlagVariationResponse, error) {
+	flagKey, result := s.flagRepository.GetFlagKey(key)
+	var response []payloads.FlagVariationResponse
+	if result.RowsAffected == 0 {
+		return response, result.Error
+	}
+	switch flagKey.FlagType {
+	case "string":
+		variations, err := s.stringVariationRepository.GetFlagVariations(flagKey.UUID)
+		for _, variation := range variations {
+			response = append(response, payloads.FlagVariationResponse{
+				UUID:  variation.UUID.String(),
+				Name:  variation.Name,
+				Value: variation.Value,
+			})
+		}
+		if err != nil {
+			return []payloads.FlagVariationResponse{}, err
+		}
+	case "int":
+		variations, err := s.intVariationRepository.GetFlagVariations(flagKey.UUID)
+		for _, variation := range variations {
+			response = append(response, payloads.FlagVariationResponse{
+				UUID:  variation.UUID.String(),
+				Name:  variation.Name,
+				Value: variation.Value,
+			})
+		}
+		if err != nil {
+			return []payloads.FlagVariationResponse{}, err
+		}
+	case "float":
+		variations, err := s.floatVariationRepository.GetFlagVariations(flagKey.UUID)
+		for _, variation := range variations {
+			response = append(response, payloads.FlagVariationResponse{
+				UUID:  variation.UUID.String(),
+				Name:  variation.Name,
+				Value: variation.Value,
+			})
+		}
+		if err != nil {
+			return []payloads.FlagVariationResponse{}, err
+		}
+	case "bool":
+		variations, err := s.boolVariationRepository.GetFlagVariations(flagKey.UUID)
+		for _, variation := range variations {
+			response = append(response, payloads.FlagVariationResponse{
+				UUID:  variation.UUID.String(),
+				Name:  variation.Name,
+				Value: variation.Value,
+			})
+		}
+		if err != nil {
+			return []payloads.FlagVariationResponse{}, err
+		}
+	}
+	return response, nil
+}

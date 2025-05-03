@@ -14,3 +14,9 @@ type FlagRepresentation struct {
 	CreatedAt                time.Time `json:"created_at"`
 	UpdatedAt                time.Time `json:"updated_at"`
 }
+
+type FlagVariationResponse struct {
+	UUID  string `json:"uuid"`
+	Name  string `json:"name"    validate:"required"`
+	Value any    `json:"value"    validate:"required"`
+}
