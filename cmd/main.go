@@ -19,8 +19,7 @@ func main() {
 
 	chi_r.Use(middleware.Logger)
 
-	chi_r.Get("/ping", handlers.HandlePing)
-
+	chi_r.Use(middleware.Heartbeat("/ping"))
 	// flags
 	chi_r.Get("/getFlag/{flagKey}", handlers.GetFlagWithVariations)
 	chi_r.Post("/evaluateFlag/{flagKey}", handlers.EvaluateFlag)
