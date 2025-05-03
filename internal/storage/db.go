@@ -61,7 +61,6 @@ func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any
 	var contextualVariation datatypes.UUID
 
 	if payload.Context.Attributes != nil && flagKey.Enabled {
-		log.Println("evaluating context")
 		flagRules, result := s.flagRulesRepository.GetTargetingRules(flagKey.UUID)
 		if result.RowsAffected > 0 {
 			for _, fr := range flagRules {

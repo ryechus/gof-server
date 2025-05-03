@@ -33,6 +33,7 @@ type FlagVariation[T comparable] struct {
 type TargetingRule struct {
 	UUID          datatypes.UUID `gorm:"primaryKey"`
 	Name          string
+	Priority      int
 	FlagKeyUUID   datatypes.UUID
 	VariationUUID datatypes.UUID
 	Attributes    datatypes.JSON
@@ -81,5 +82,4 @@ func MigrateDB(db *gorm.DB) {
 	db.AutoMigrate(&FlagKeyFloatVariations{})
 	db.AutoMigrate(&FlagKeyIntVariations{})
 	db.AutoMigrate(&TargetingRule{})
-	db.AutoMigrate(&TargetingRuleContext{})
 }

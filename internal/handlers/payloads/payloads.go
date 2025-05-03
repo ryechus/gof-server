@@ -42,5 +42,6 @@ type PutRule struct {
 	UUID          string        `json:"uuid"`
 	Name          string        `json:"name" validate:"required"`
 	VariationUUID string        `json:"variation_uuid" validate:"required"`
+	Priority      int           `json:"priority"`
 	RuleContexts  []RuleContext `json:"contexts" validate:"required"`
 }

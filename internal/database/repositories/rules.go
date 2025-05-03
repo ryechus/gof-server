@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/placer14/gof-server/internal/database"
@@ -19,7 +20,7 @@ var _ Repository = &RuleRepository{}
 func (rr *RuleRepository) GetTargetingRules(flagKeyUUID datatypes.UUID) ([]database.TargetingRule, *gorm.DB) {
 	db := rr.DB
 	var flagRules []database.TargetingRule
-	result := db.Raw("SELECT uuid, name, flag_key_uuid, variation_uuid, attributes FROM targeting_rules WHERE flag_key_uuid = ?", flagKeyUUID.String()).Scan(&flagRules)
+	result := db.Raw("SELECT uuid, name, flag_key_uuid, variation_uuid, attributes FROM targeting_rules WHERE flag_key_uuid = ? ORDER BY priority ASC", flagKeyUUID.String()).Scan(&flagRules)
 
 	return flagRules, result
 }
@@ -42,8 +43,10 @@ func (rr *RuleRepository) SaveTargetingRule(payload payloads.PutRule, tx *gorm.D
 	}
 
 	ruleUUID := datatypes.NewUUIDv4()
+	operation := "insert"
 	if payload.UUID != "" {
 		ruleUUID = datatypes.UUID(uuid.MustParse(payload.UUID))
+		operation = "update"
 	}
 
 	rule := database.TargetingRule{
@@ -51,11 +54,24 @@ func (rr *RuleRepository) SaveTargetingRule(payload payloads.PutRule, tx *gorm.D
 		Name:          payload.Name,
 		FlagKeyUUID:   flagKeyUUID,
 		VariationUUID: variationUUID,
+		Priority:      payload.Priority,
 		Attributes:    datatypes.JSON([]byte(jsonRuleContexts)),
 	}
 
-	query := "INSERT INTO targeting_rules (uuid, name, flag_key_uuid, variation_uuid, attributes) VALUES (?, ?, ?, ?, ?)"
-	result := db.Raw(query, rule.UUID, rule.Name, rule.FlagKeyUUID, rule.VariationUUID, rule.Attributes).Scan(&rule)
+	var result *gorm.DB
+	if operation == "update" {
+		query := `
+		UPDATE targeting_rules 
+		SET name = ?, variation_uuid = ?, attributes = ?, priority = ? 
+		WHERE uuid = ?
+		`
+		log.Println("updating rule")
+		result = db.Raw(query, rule.Name, rule.VariationUUID, rule.Attributes, rule.Priority, payload.UUID).Scan(&rule)
+	} else {
+		query := "INSERT INTO targeting_rules (uuid, name, flag_key_uuid, variation_uuid, attributes, priority) VALUES (?, ?, ?, ?, ?, ?)"
+		log.Println("inserting rule")
+		result = db.Raw(query, rule.UUID, rule.Name, rule.FlagKeyUUID, rule.VariationUUID, rule.Attributes, rule.Priority).Scan(&rule)
+	}
 
 	if result.Error != nil {
 		db.Rollback()
