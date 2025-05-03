@@ -11,13 +11,29 @@ import (
 
 var ValidatorConfig = &validator.Config{TagName: "validate"}
 
-// func GetFlag(w http.ResponseWriter, r *http.Request) {
-// 	flagKey := r.PathValue("flagKey")
+func GetFlagWithVariations(w http.ResponseWriter, r *http.Request) {
+	flagKey := r.PathValue("flagKey")
 
-// 	ctx := r.Context()
-// 	ctx_storage := ctx.Value(config.KeyVariable)
-// 	storageType := ctx_storage.(*config.FlagStorageType)
-// }
+	ctx := r.Context()
+	ctx_storage := ctx.Value(config.KeyVariable)
+	storageType := ctx_storage.(*config.FlagStorageType)
+
+	response, err := storageType.GetFlagWithVariations(flagKey)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	responseJson, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(responseJson))
+}
 
 func EvaluateFlag(w http.ResponseWriter, r *http.Request) {
 	flagKey := r.PathValue("flagKey")
@@ -56,6 +72,7 @@ func EvaluateFlag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(responseJson))
 }

@@ -6,27 +6,32 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/placer14/gof-server/internal/config"
 	"github.com/placer14/gof-server/internal/handlers"
 )
 
 func main() {
-	mux := http.NewServeMux()
+	// mux := http.NewServeMux()
+	chi_r := chi.NewRouter()
 
-	mux.HandleFunc("/ping", handlers.HandlePing)
+	chi_r.Use(middleware.Logger)
 
-	// mux.HandleFunc("GET /getFlag/{flagKey}", handlers.GetFlag)
-	mux.HandleFunc("POST /evaluateFlag/{flagKey}", handlers.EvaluateFlag)
-	mux.HandleFunc("POST /createFlag", handlers.CreateFlag)
-	mux.HandleFunc("PUT /updateFlag", handlers.UpdateFlag)
+	chi_r.Get("/ping", handlers.HandlePing)
 
-	mux.HandleFunc("PUT /rule", handlers.PutRule)
+	chi_r.Get("/getFlag/{flagKey}", handlers.GetFlagWithVariations)
+	chi_r.Post("/evaluateFlag/{flagKey}", handlers.EvaluateFlag)
+	chi_r.Post("/createFlag", handlers.CreateFlag)
+	chi_r.Put("/updateFlag", handlers.UpdateFlag)
+
+	chi_r.Put("/rule", handlers.PutRule)
 
 	log.Println("Server is running on http://localhost:23456")
 	ctx := context.Background()
 	server := &http.Server{
 		Addr:    ":23456",
-		Handler: mux,
+		Handler: chi_r,
 		BaseContext: func(l net.Listener) context.Context {
 			storageIface := config.FlagStorageIface
 			ctx = context.WithValue(ctx, config.KeyVariable, storageIface)

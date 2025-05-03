@@ -53,7 +53,6 @@ func hasMatchingRules(flagRuleContexts []payloads.RuleContext, attributes map[st
 
 func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any, error) {
 	flagKey, result := s.flagRepository.GetFlagKey(key)
-	log.Printf("evaluating %v", flagKey)
 	if result.RowsAffected == 0 {
 		return nil, result.Error
 	}
@@ -112,6 +111,8 @@ func (s *DBStorage) UpdateFlag(payload payloads.UpdateFlag) error {
 
 	gormTx.Begin()
 	flagKey.Enabled = payload.Enabled
+	flagKey.Name = &payload.Name
+	flagKey.Description = &payload.Description
 	s.flagRepository.UpdateFlagKey(&flagKey, gormTx)
 	gormTx.Commit()
 
@@ -237,4 +238,71 @@ func (s *DBStorage) CreateFlag(key string, flagType string, variations []payload
 	gormTx.Commit()
 
 	return nil
+}
+
+func (s *DBStorage) GetFlagWithVariations(key string) (payloads.FlagRepresentation, error) {
+	flagKey, result := s.flagRepository.GetFlagKey(key)
+	var response payloads.FlagRepresentation
+	if result.RowsAffected == 0 {
+		return response, result.Error
+	}
+	response.FlagUUID = flagKey.UUID.String()
+	response.Key = flagKey.Key
+	response.Name = *flagKey.Name
+	response.Description = *flagKey.Description
+	response.FlagType = flagKey.FlagType
+	response.Enabled = flagKey.Enabled
+	response.CreatedAt = flagKey.CreatedAt
+	response.UpdatedAt = flagKey.UpdatedAt
+	switch flagKey.FlagType {
+	case "string":
+		value, err := s.stringVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
+		if err != nil {
+			return payloads.FlagRepresentation{}, err
+		}
+		response.DefaultEnabledVariation = value
+
+		value, err = s.stringVariationRepository.GetFlagVariationValue(flagKey.DefaultVariation)
+		if err != nil {
+			return payloads.FlagRepresentation{}, err
+		}
+		response.DefaultDisabledVariation = value
+	case "int":
+		value, err := s.intVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
+		if err != nil {
+			return payloads.FlagRepresentation{}, err
+		}
+		response.DefaultEnabledVariation = value
+
+		value, err = s.intVariationRepository.GetFlagVariationValue(flagKey.DefaultVariation)
+		if err != nil {
+			return payloads.FlagRepresentation{}, err
+		}
+		response.DefaultDisabledVariation = value
+	case "float":
+		value, err := s.floatVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
+		if err != nil {
+			return payloads.FlagRepresentation{}, err
+		}
+		response.DefaultEnabledVariation = value
+
+		value, err = s.floatVariationRepository.GetFlagVariationValue(flagKey.DefaultVariation)
+		if err != nil {
+			return payloads.FlagRepresentation{}, err
+		}
+		response.DefaultDisabledVariation = value
+	case "bool":
+		value, err := s.boolVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
+		if err != nil {
+			return payloads.FlagRepresentation{}, err
+		}
+		response.DefaultEnabledVariation = value
+
+		value, err = s.boolVariationRepository.GetFlagVariationValue(flagKey.DefaultVariation)
+		if err != nil {
+			return payloads.FlagRepresentation{}, err
+		}
+		response.DefaultDisabledVariation = value
+	}
+	return response, nil
 }

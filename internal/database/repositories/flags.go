@@ -24,7 +24,14 @@ func (fr *FlagRepository) GetFlagKey(key string) (FlagKey, *gorm.DB) {
 	db := fr.DB
 
 	// result := db.First(&flagKey, "key = ?", key)
-	result := db.Raw("SELECT uuid, key, flag_type, default_variation, default_enabled_variation, enabled FROM flag_keys WHERE key = ?", key).Scan(&flagKey)
+	query := `
+		SELECT uuid, key, name, description, flag_type,
+			default_variation, default_enabled_variation,
+			enabled, created_at, updated_at
+		FROM flag_keys
+		WHERE key = ?
+	`
+	result := db.Raw(query, key).Scan(&flagKey)
 
 	return flagKey, result
 }
@@ -47,8 +54,8 @@ func (fr *FlagRepository) CreateFlagKey(flagType, key string, tx *gorm.DB) (Flag
 		Key:      key,
 		Enabled:  false,
 	}
-	query := "INSERT INTO flag_keys (uuid, flag_type, key, enabled) VALUES (?, ?, ?, ?)"
-	result := db.Raw(query, newFlag.UUID, newFlag.FlagType, newFlag.Key, newFlag.Enabled).Scan(&newFlag)
+	query := "INSERT INTO flag_keys (uuid, name, flag_type, key, enabled) VALUES (?, ?, ?, ?)"
+	result := db.Raw(query, newFlag.UUID, newFlag.Name, newFlag.FlagType, newFlag.Key, newFlag.Enabled).Scan(&newFlag)
 	return newFlag, result
 }
 

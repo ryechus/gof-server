@@ -25,7 +25,7 @@ func (fvr *FlagVariationRepository[T]) GetFlagKeyVariationByUUID(variationUUID d
 	db := fvr.DB
 	var flagVariation database.FlagVariation[T]
 	scope := database.GetTableName(flagVariation)(db)
-	query := fmt.Sprintf("SELECT uuid, flag_key_uuid, name, value, last_updated FROM %s WHERE uuid = ?",
+	query := fmt.Sprintf("SELECT uuid, flag_key_uuid, name, value FROM %s WHERE uuid = ?",
 		scope.Statement.Table)
 	result := db.Raw(query, variationUUID.String()).Scan(&flagVariation)
 	if result.RowsAffected == 0 {
@@ -58,7 +58,7 @@ func (fvr *FlagVariationRepository[T]) GetFlagVariationValue(variationUUID datat
 	scope := database.GetTableName(flagVariation)(db)
 
 	var returnVal T
-	query := fmt.Sprintf("SELECT uuid, flag_key_uuid, name, value, last_updated FROM %s WHERE uuid = ?",
+	query := fmt.Sprintf("SELECT uuid, flag_key_uuid, name, value FROM %s WHERE uuid = ?",
 		scope.Statement.Table)
 	result := db.Raw(query, variationUUID.String()).Scan(&flagVariation)
 	if result.RowsAffected != 0 {

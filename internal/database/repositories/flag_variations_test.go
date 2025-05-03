@@ -3,7 +3,6 @@ package repositories_test
 import (
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/placer14/gof-server/internal/database"
@@ -30,7 +29,6 @@ func TestCreateFlagKeyVariation(t *testing.T) {
 	gormDB, mock, db := getMockedDB(t)
 	defer db.Close()
 
-	now := time.Now()
 	variationName := "on"
 	flagKey := database.FlagKey{
 		UUID:                    datatypes.NewUUIDv4(),
@@ -39,7 +37,6 @@ func TestCreateFlagKeyVariation(t *testing.T) {
 		DefaultVariation:        datatypes.NewUUIDv4(),
 		DefaultEnabledVariation: datatypes.NewUUIDv4(),
 		Enabled:                 false,
-		LastUpdated:             &now,
 	}
 	flagVariation := payloads.FlagVariation{
 		Name:  variationName,

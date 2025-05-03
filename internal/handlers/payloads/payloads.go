@@ -14,8 +14,10 @@ type CreateFlag struct {
 }
 
 type UpdateFlag struct {
-	Key     string `json:"key" validate:"required"`
-	Enabled bool   `json:"enabled"`
+	Key         string `json:"key" validate:"required"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Enabled     bool   `json:"enabled"`
 }
 
 type EvaluateFlag struct {

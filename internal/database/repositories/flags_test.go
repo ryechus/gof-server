@@ -89,8 +89,8 @@ func TestUpdateFlagKey(t *testing.T) {
 	}
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "flag_keys" SET "key"=$1,"flag_type"=$2,"default_variation"=$3,"default_enabled_variation"=$4,"enabled"=$5,"last_updated"=$6 WHERE "uuid" = $7`)).
-		WithArgs(flagKey.Key, flagKey.FlagType, flagKey.DefaultVariation, flagKey.DefaultEnabledVariation, flagKey.Enabled, flagKey.LastUpdated, flagKey.UUID).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "flag_keys" SET "key"=$1,"flag_type"=$2,"default_variation"=$3,"default_enabled_variation"=$4,"enabled"=$5 WHERE "uuid" = $7`)).
+		WithArgs(flagKey.Key, flagKey.FlagType, flagKey.DefaultVariation, flagKey.DefaultEnabledVariation, flagKey.Enabled, flagKey.UUID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	flagRepository := repositories.FlagRepository{DB: gormDB}

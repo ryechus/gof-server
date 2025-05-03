@@ -27,6 +27,7 @@ type FlagVariation[T comparable] struct {
 	Value       T
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	FlagKey     FlagKey `gorm:"foreignKey:FlagKeyUUID"`
 }
 
 type TargetingRule struct {
