@@ -51,7 +51,7 @@ func hasMatchingRules(flagRuleContexts []payloads.RuleContext, attributes map[st
 	return false
 }
 
-func (s *DBStorage) EvaluateFlag(key string, payload payloads.GetFlag) (any, error) {
+func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any, error) {
 	flagKey, result := s.flagRepository.GetFlagKey(key)
 	log.Printf("evaluating %v", flagKey)
 	if result.RowsAffected == 0 {

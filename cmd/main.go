@@ -15,8 +15,8 @@ func main() {
 
 	mux.HandleFunc("/ping", handlers.HandlePing)
 
+	// mux.HandleFunc("GET /getFlag/{flagKey}", handlers.GetFlag)
 	mux.HandleFunc("POST /evaluateFlag/{flagKey}", handlers.EvaluateFlag)
-
 	mux.HandleFunc("POST /createFlag", handlers.CreateFlag)
 	mux.HandleFunc("PUT /updateFlag", handlers.UpdateFlag)
 

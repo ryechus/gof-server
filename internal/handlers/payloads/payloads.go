@@ -6,9 +6,11 @@ type FlagVariation struct {
 }
 
 type CreateFlag struct {
-	Key        string          `json:"key"    validate:"required"`
-	FlagType   string          `json:"flag_type"    validate:"required"`
-	Variations []FlagVariation `json:"variations"    validate:"min=2,required"`
+	Name        string          `json:"name" validate:"required"`
+	Description string          `json:"description"`
+	Key         string          `json:"key"    validate:"required"`
+	FlagType    string          `json:"flag_type"    validate:"required"`
+	Variations  []FlagVariation `json:"variations"    validate:"min=2,required"`
 }
 
 type UpdateFlag struct {
@@ -16,7 +18,7 @@ type UpdateFlag struct {
 	Enabled bool   `json:"enabled"`
 }
 
-type GetFlag struct {
+type EvaluateFlag struct {
 	Context ContextEvaluation `json:"context"`
 }
 

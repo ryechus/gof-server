@@ -9,14 +9,15 @@ import (
 
 type FlagKey struct {
 	UUID                    datatypes.UUID `gorm:"primaryKey"`
-	Key                     string         `gorm:"index"`
+	Name                    *string
+	Description             *string
+	Key                     string `gorm:"index"`
 	FlagType                string
 	DefaultVariation        datatypes.UUID
 	DefaultEnabledVariation datatypes.UUID
 	Enabled                 bool
-	LastUpdated             *time.Time
-	// CreatedAt               *time.Time
-	// UpdatedAt               *time.Time
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
 }
 
 type FlagVariation[T comparable] struct {
@@ -24,9 +25,8 @@ type FlagVariation[T comparable] struct {
 	FlagKeyUUID datatypes.UUID
 	Name        string
 	Value       T
-	LastUpdated *time.Time
-	// CreatedAt   *time.Time
-	// UpdatedAt   *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 type TargetingRule struct {
@@ -35,6 +35,8 @@ type TargetingRule struct {
 	FlagKeyUUID   datatypes.UUID
 	VariationUUID datatypes.UUID
 	Attributes    datatypes.JSON
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 type TargetingRuleContext struct {
