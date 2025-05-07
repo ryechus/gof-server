@@ -329,7 +329,7 @@ func (s *DBStorage) GetFlagWithVariations(key string) (payloads.FlagRepresentati
 	response.CreatedAt = flagKey.CreatedAt
 	response.UpdatedAt = flagKey.UpdatedAt
 	rules, result := s.flagRulesRepository.GetTargetingRules(flagKey.UUID)
-	if result.RowsAffected == 0 {
+	if result.Error != nil {
 		return payloads.FlagRepresentation{}, result.Error
 	}
 	var responseRules []payloads.FlagRuleResponse
