@@ -50,6 +50,13 @@ type TargetingRuleContext struct {
 	Value             string
 }
 
+type EvaluationContext struct {
+	Kind       string
+	Attributes datatypes.JSON
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
 type FlagKeyStringVariations FlagVariation[string]
 
 type FlagKeyIntVariations FlagVariation[int64]
