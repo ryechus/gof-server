@@ -101,10 +101,20 @@ func (s *DBStorage) UpdateFlag(payload payloads.UpdateFlag) error {
 	flagKey.Name = &payload.Name
 	flagKey.Description = &payload.Description
 	if payload.DefaultVariation != "" {
-		flagKey.DefaultVariation = datatypes.UUID(uuid.MustParse(payload.DefaultVariation))
+		exists, _ := s.verifyFlagVariationExists(flagKey.UUID.String(), payload.DefaultVariation)
+		if exists {
+			flagKey.DefaultVariation = datatypes.UUID(uuid.MustParse(payload.DefaultVariation))
+		} else {
+			return fmt.Errorf("flag variation %s does not belong to flag key %s", payload.DefaultVariation, flagKey.UUID.String())
+		}
 	}
 	if payload.DefaultEnabledVariation != "" {
-		flagKey.DefaultEnabledVariation = datatypes.UUID(uuid.MustParse(payload.DefaultEnabledVariation))
+		exists, _ := s.verifyFlagVariationExists(flagKey.UUID.String(), payload.DefaultEnabledVariation)
+		if exists {
+			flagKey.DefaultEnabledVariation = datatypes.UUID(uuid.MustParse(payload.DefaultEnabledVariation))
+		} else {
+			return fmt.Errorf("flag variation %s does not belong to flag key %s", payload.DefaultVariation, flagKey.UUID.String())
+		}
 	}
 	_, result = s.flagRepository.UpdateFlagKey(&flagKey, gormTx)
 	if result.Error != nil {
