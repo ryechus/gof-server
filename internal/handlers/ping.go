@@ -11,7 +11,7 @@ func HandlePing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseJson, err := json.Marshal(responseType{Value: "pong"})
+	responseJson, err := json.Marshal(scalarResponse{Value: "pong"})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

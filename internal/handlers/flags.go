@@ -65,7 +65,7 @@ func EvaluateFlag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseJson, err := json.Marshal(responseType{Value: value})
+	responseJson, err := json.Marshal(scalarResponse{Value: value})
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -1,5 +1,5 @@
 package handlers
 
-type responseType struct {
-		Value any `json:"value"`
+type scalarResponse struct {
+	Value any `json:"value"`
 }
