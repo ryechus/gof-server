@@ -106,7 +106,10 @@ func (s *DBStorage) UpdateFlag(payload payloads.UpdateFlag) error {
 	if payload.DefaultEnabledVariation != "" {
 		flagKey.DefaultEnabledVariation = datatypes.UUID(uuid.MustParse(payload.DefaultEnabledVariation))
 	}
-	s.flagRepository.UpdateFlagKey(&flagKey, gormTx)
+	_, result = s.flagRepository.UpdateFlagKey(&flagKey, gormTx)
+	if result.Error != nil {
+		return result.Error
+	}
 	gormTx.Commit()
 
 	return nil
@@ -227,7 +230,10 @@ func (s *DBStorage) CreateFlag(key string, flagType string, variations []payload
 	flagKey.DefaultEnabledVariation = uuids[0]
 	flagKey.DefaultVariation = uuids[lenVariations-1]
 
-	s.flagRepository.UpdateFlagKey(&flagKey, gormTx)
+	_, result = s.flagRepository.UpdateFlagKey(&flagKey, gormTx)
+	if result.Error != nil {
+		return result.Error
+	}
 	gormTx.Commit()
 
 	return nil

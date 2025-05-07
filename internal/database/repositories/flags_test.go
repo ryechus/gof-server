@@ -17,7 +17,7 @@ func TestGetFlagKey(t *testing.T) {
 
 	flagKeyString := "test"
 	columns := []string{"uuid", "key", "flag_type", "default_variation", "default_enabled_variation", "enabled", "last_updated"}
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT uuid, key, flag_type, default_variation, default_enabled_variation, enabled FROM flag_keys WHERE key = $1`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT uuid, key, name, description, flag_type, default_variation, default_enabled_variation, enabled, created_at, updated_at FROM flag_keys WHERE key = $1`)).
 		WithArgs(flagKeyString).
 		WillReturnRows(sqlmock.NewRows(columns))
 
@@ -61,8 +61,8 @@ func TestCreateFlagKey(t *testing.T) {
 	defer db.Close()
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO flag_keys (uuid, flag_type, key, enabled) VALUES ($1, $2, $3, $4)`)).
-		WithArgs(sqlmock.AnyArg(), "bool", "test", false).
+	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO flag_keys (uuid, name, flag_type, key, enabled) VALUES ($1, $2, $3, $4, $5)")).
+		WithArgs(sqlmock.AnyArg(), nil, "bool", "test", false).
 		WillReturnRows(sqlmock.NewRows([]string{}))
 
 	flagRepository := repositories.FlagRepository{DB: gormDB}
@@ -89,9 +89,9 @@ func TestUpdateFlagKey(t *testing.T) {
 	}
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "flag_keys" SET "key"=$1,"flag_type"=$2,"default_variation"=$3,"default_enabled_variation"=$4,"enabled"=$5 WHERE "uuid" = $7`)).
-		WithArgs(flagKey.Key, flagKey.FlagType, flagKey.DefaultVariation, flagKey.DefaultEnabledVariation, flagKey.Enabled, flagKey.UUID).
-		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectQuery(regexp.QuoteMeta("UPDATE flag_keys SET name=$1, description=$2 , default_variation=$3, default_enabled_variation=$4, enabled=$5, updated_at=$6 WHERE uuid = $7")).
+		WithArgs(nil, nil, flagKey.DefaultVariation, flagKey.DefaultEnabledVariation, flagKey.Enabled, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{}))
 
 	flagRepository := repositories.FlagRepository{DB: gormDB}
 

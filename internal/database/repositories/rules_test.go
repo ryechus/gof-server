@@ -48,8 +48,8 @@ func TestSaveTargetingRule(t *testing.T) {
 		RuleContexts:  ruleContexts,
 	}
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO targeting_rules (uuid, name, flag_key_uuid, variation_uuid, attributes) VALUES ($1, $2, $3, $4, $5)")).
-		WithArgs(sqlmock.AnyArg(), payload.Name, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO targeting_rules (uuid, name, flag_key_uuid, variation_uuid, attributes, priority) VALUES ($1, $2, $3, $4, $5, $6)")).
+		WithArgs(sqlmock.AnyArg(), payload.Name, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), 0).
 		WillReturnRows(sqlmock.NewRows([]string{}))
 	flagRepository := repositories.RuleRepository{DB: gormDB}
 

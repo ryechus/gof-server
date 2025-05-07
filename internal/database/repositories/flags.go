@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"time"
+
 	"github.com/placer14/gof-server/internal/database"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -59,7 +61,11 @@ func (fr *FlagRepository) CreateFlagKey(flagType, key string, tx *gorm.DB) (Flag
 	return newFlag, result
 }
 
-func (fr *FlagRepository) UpdateFlagKey(flagKey *FlagKey, tx *gorm.DB) {
+func (fr *FlagRepository) UpdateFlagKey(flagKey *FlagKey, tx *gorm.DB) (*FlagKey, *gorm.DB) {
 	db := tx
-	db.Save(flagKey)
+	now := time.Now()
+	query := `UPDATE flag_keys SET name=$1, description=$2 , default_variation=$3, default_enabled_variation=$4, enabled=$5, updated_at=$6 WHERE uuid = $7`
+	result := db.Raw(query, flagKey.Name, flagKey.Description, flagKey.DefaultVariation, flagKey.DefaultEnabledVariation, flagKey.Enabled, now, flagKey.UUID).Scan(&flagKey)
+
+	return flagKey, result
 }
