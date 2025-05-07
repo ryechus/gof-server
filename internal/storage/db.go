@@ -42,66 +42,47 @@ func NewDBStorage() *DBStorage {
 	}
 }
 
+func doComparison(ctx payloads.RuleContext, value any) bool {
+	switch strings.ToUpper(ctx.Operator) {
+	case utils.IN, "":
+		newList := utils.MakeNewList[string](ctx.Values)
+		return utils.SliceContains(newList, value.(string))
+	case utils.NOTIN, utils.NOT_IN:
+		newList := utils.MakeNewList[string](ctx.Values)
+		return !utils.SliceContains(newList, value.(string))
+	case utils.CONTAINS:
+		newList := utils.MakeNewList[string](ctx.Values)
+		return utils.StringsContains(newList, value.(string))
+	case utils.NOTCONTAINS:
+		newList := utils.MakeNewList[string](ctx.Values)
+		return !utils.StringsContains(newList, value.(string))
+	case utils.GT:
+		newList := utils.MakeNewList[float64](ctx.Values)
+		minVal := utils.Min(newList...)
+		return utils.IsGreaterThan(value.(float64), minVal)
+	case utils.GTE:
+		newList := utils.MakeNewList[float64](ctx.Values)
+		minVal := utils.Min(newList...)
+		return utils.IsGreaterThanEqual(value.(float64), minVal)
+	case utils.LT:
+		newList := utils.MakeNewList[float64](ctx.Values)
+		maxVal := utils.Max(newList...)
+		return utils.IsLessThan(value.(float64), maxVal)
+	case utils.LTE:
+		newList := utils.MakeNewList[float64](ctx.Values)
+		maxVal := utils.Max(newList...)
+		return utils.IsLessThanEqual(value.(float64), maxVal)
+	default:
+		return false
+	}
+}
+
 func hasMatchingRules(flagRuleContexts []payloads.RuleContext, attributes map[string]any) bool {
 	outcomes := make([]bool, len(flagRuleContexts))
 	for flagIdx, ctx := range flagRuleContexts {
-	attributesLoop:
 		for key, value := range attributes {
 			if ctx.Attribute == key {
-				switch strings.ToUpper(ctx.Operator) {
-				case utils.IN, "":
-					newList := utils.MakeNewList[string](ctx.Values)
-					outcomes[flagIdx] = utils.SliceContains[string](newList, value.(string))
-					if outcomes[flagIdx] {
-						break attributesLoop
-					}
-				case utils.NOTIN:
-					newList := utils.MakeNewList[string](ctx.Values)
-					outcomes[flagIdx] = !utils.SliceContains[string](newList, value.(string))
-					if outcomes[flagIdx] {
-						break attributesLoop
-					}
-				case utils.CONTAINS:
-					newList := utils.MakeNewList[string](ctx.Values)
-					outcomes[flagIdx] = utils.StringsContains(newList, value.(string))
-					if outcomes[flagIdx] {
-						break attributesLoop
-					}
-				case utils.NOTCONTAINS:
-					newList := utils.MakeNewList[string](ctx.Values)
-					outcomes[flagIdx] = !utils.StringsContains(newList, value.(string))
-					if outcomes[flagIdx] {
-						break attributesLoop
-					}
-				case utils.GT:
-					newList := utils.MakeNewList[float64](ctx.Values)
-					minVal := utils.Min(newList...)
-					outcomes[flagIdx] = utils.IsGreaterThan(value.(float64), minVal)
-					if outcomes[flagIdx] {
-						break attributesLoop
-					}
-				case utils.GTE:
-					newList := utils.MakeNewList[float64](ctx.Values)
-					minVal := utils.Min(newList...)
-					outcomes[flagIdx] = utils.IsGreaterThanEqual(value.(float64), minVal)
-					if outcomes[flagIdx] {
-						break attributesLoop
-					}
-				case utils.LT:
-					newList := utils.MakeNewList[float64](ctx.Values)
-					maxVal := utils.Max(newList...)
-					outcomes[flagIdx] = utils.IsLessThan(value.(float64), maxVal)
-					if outcomes[flagIdx] {
-						break attributesLoop
-					}
-				case utils.LTE:
-					newList := utils.MakeNewList[float64](ctx.Values)
-					maxVal := utils.Max(newList...)
-					outcomes[flagIdx] = utils.IsLessThanEqual(value.(float64), maxVal)
-					if outcomes[flagIdx] {
-						break attributesLoop
-					}
-				}
+				outcomes[flagIdx] = doComparison(ctx, value)
 			}
 		}
 	}
