@@ -1,22 +1,32 @@
 package handlers_test
 
-// import (
-// 	"context"
-// 	"encoding/json"
-// 	"fmt"
-// 	"io"
-// 	"net/http"
-// 	"net/http/httptest"
-// 	"testing"
-
-// 	"github.com/placer14/gof-server/internal/handlers"
-// 	"github.com/placer14/gof-server/internal/storage"
-// 	"github.com/stretchr/testify/assert"
-// )
+import (
+	"testing"
+)
 
 // type respValueType struct {
 // 	Value any `json:"value"`
 // }
+
+func TestGetFlagWithVariations(t *testing.T) {
+
+}
+
+func TestEvaluateFlag(t *testing.T) {
+
+}
+
+func TestUpdateFlag(t *testing.T) {
+
+}
+
+func TestCreateFlag(t *testing.T) {
+
+}
+
+func TestGetFlagVariations(t *testing.T) {
+
+}
 
 // func TestGetStringValueHandler(t *testing.T) {
 // 	m := storage.NewInMemoryStorage()
