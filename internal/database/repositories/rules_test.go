@@ -38,7 +38,7 @@ func TestSaveTargetingRule(t *testing.T) {
 		{
 			ContextKind: "user",
 			Attribute:   "email",
-			Values:      []string{"example@gmail.com", "example2@example.com"},
+			Values:      []any{"example@gmail.com", "example2@example.com"},
 		},
 	}
 	payload := payloads.PutRule{
