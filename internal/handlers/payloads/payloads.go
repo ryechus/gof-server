@@ -32,9 +32,10 @@ type ContextEvaluation struct {
 }
 
 type RuleContext struct {
-	ContextKind string   `json:"kind"`
-	Attribute   string   `json:"attribute"`
-	Values      []string `json:"values"`
+	ContextKind string `json:"kind"`
+	Attribute   string `json:"attribute"`
+	Values      []any  `json:"values"`
+	Operator    string `json:"operator"`
 }
 
 type PutRule struct {
