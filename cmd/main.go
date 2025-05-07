@@ -21,10 +21,10 @@ func main() {
 
 	log.Printf("Server is running on http://%s:%d", host, portNumber)
 	ctx := context.Background()
-	chi_r := router.GetChiRouter()
+	chiRouter := router.GetChiRouter()
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", host, portNumber),
-		Handler: chi_r,
+		Handler: chiRouter,
 		BaseContext: func(l net.Listener) context.Context {
 			storageIface := config.FlagStorageIface
 			ctx = context.WithValue(ctx, config.KeyVariable, storageIface)

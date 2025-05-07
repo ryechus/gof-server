@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"slices"
+	"strings"
+
+	"github.com/placer14/gof-server/internal/utils"
 
 	"github.com/google/uuid"
 	"github.com/placer14/gof-server/internal/database"
@@ -41,14 +43,75 @@ func NewDBStorage() *DBStorage {
 }
 
 func hasMatchingRules(flagRuleContexts []payloads.RuleContext, attributes map[string]any) bool {
-	for key, value := range attributes {
-		for _, ctx := range flagRuleContexts {
-			if ctx.Attribute == key && slices.Contains(ctx.Values, value.(string)) {
-				return true
+	outcomes := make([]bool, len(flagRuleContexts))
+	for flagIdx, ctx := range flagRuleContexts {
+	attributesLoop:
+		for key, value := range attributes {
+			if ctx.Attribute == key {
+				switch strings.ToUpper(ctx.Operator) {
+				case utils.IN, "":
+					newList := utils.MakeNewList[string](ctx.Values)
+					outcomes[flagIdx] = utils.SliceContains[string](newList, value.(string))
+					if outcomes[flagIdx] {
+						break attributesLoop
+					}
+				case utils.NOTIN:
+					newList := utils.MakeNewList[string](ctx.Values)
+					outcomes[flagIdx] = !utils.SliceContains[string](newList, value.(string))
+					if outcomes[flagIdx] {
+						break attributesLoop
+					}
+				case utils.CONTAINS:
+					newList := utils.MakeNewList[string](ctx.Values)
+					outcomes[flagIdx] = utils.StringsContains(newList, value.(string))
+					if outcomes[flagIdx] {
+						break attributesLoop
+					}
+				case utils.NOTCONTAINS:
+					newList := utils.MakeNewList[string](ctx.Values)
+					outcomes[flagIdx] = !utils.StringsContains(newList, value.(string))
+					if outcomes[flagIdx] {
+						break attributesLoop
+					}
+				case utils.GT:
+					newList := utils.MakeNewList[float64](ctx.Values)
+					minVal := utils.Min(newList...)
+					outcomes[flagIdx] = utils.IsGreaterThan(value.(float64), minVal)
+					if outcomes[flagIdx] {
+						break attributesLoop
+					}
+				case utils.GTE:
+					newList := utils.MakeNewList[float64](ctx.Values)
+					minVal := utils.Min(newList...)
+					outcomes[flagIdx] = utils.IsGreaterThanEqual(value.(float64), minVal)
+					if outcomes[flagIdx] {
+						break attributesLoop
+					}
+				case utils.LT:
+					newList := utils.MakeNewList[float64](ctx.Values)
+					maxVal := utils.Max(newList...)
+					outcomes[flagIdx] = utils.IsLessThan(value.(float64), maxVal)
+					if outcomes[flagIdx] {
+						break attributesLoop
+					}
+				case utils.LTE:
+					newList := utils.MakeNewList[float64](ctx.Values)
+					maxVal := utils.Max(newList...)
+					outcomes[flagIdx] = utils.IsLessThanEqual(value.(float64), maxVal)
+					if outcomes[flagIdx] {
+						break attributesLoop
+					}
+				}
 			}
 		}
 	}
-	return false
+
+	for _, outcome := range outcomes {
+		if !outcome {
+			return false
+		}
+	}
+	return true
 }
 
 func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any, error) {
@@ -265,56 +328,49 @@ func (s *DBStorage) GetFlagWithVariations(key string) (payloads.FlagRepresentati
 	response.Enabled = flagKey.Enabled
 	response.CreatedAt = flagKey.CreatedAt
 	response.UpdatedAt = flagKey.UpdatedAt
+	rules, result := s.flagRulesRepository.GetTargetingRules(flagKey.UUID)
+	if result.RowsAffected == 0 {
+		return payloads.FlagRepresentation{}, result.Error
+	}
+	var responseRules []payloads.FlagRuleResponse
+	for _, rule := range rules {
+		responseRules = append(responseRules, payloads.FlagRuleResponse{
+			UUID:          rule.UUID.String(),
+			Name:          rule.Name,
+			VariationUUID: rule.VariationUUID.String(),
+			Priority:      rule.Priority,
+			RuleContexts:  rule.Attributes,
+		})
+	}
+	response.Rules = responseRules
+	var enabledValue, disabledValue any
+	var enabledErr, disabledErr error
 	switch flagKey.FlagType {
 	case "string":
-		value, err := s.stringVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
-		if err != nil {
-			return payloads.FlagRepresentation{}, err
-		}
-		response.DefaultEnabledVariation = value
-
-		value, err = s.stringVariationRepository.GetFlagVariationValue(flagKey.DefaultVariation)
-		if err != nil {
-			return payloads.FlagRepresentation{}, err
-		}
-		response.DefaultDisabledVariation = value
+		enabledValue, enabledErr = s.stringVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
+		disabledValue, disabledErr = s.stringVariationRepository.GetFlagVariationValue(flagKey.DefaultVariation)
 	case "int":
-		value, err := s.intVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
-		if err != nil {
-			return payloads.FlagRepresentation{}, err
-		}
-		response.DefaultEnabledVariation = value
-
-		value, err = s.intVariationRepository.GetFlagVariationValue(flagKey.DefaultVariation)
-		if err != nil {
-			return payloads.FlagRepresentation{}, err
-		}
-		response.DefaultDisabledVariation = value
+		enabledValue, enabledErr = s.intVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
+		disabledValue, disabledErr = s.intVariationRepository.GetFlagVariationValue(flagKey.DefaultVariation)
 	case "float":
-		value, err := s.floatVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
-		if err != nil {
-			return payloads.FlagRepresentation{}, err
-		}
-		response.DefaultEnabledVariation = value
-
-		value, err = s.floatVariationRepository.GetFlagVariationValue(flagKey.DefaultVariation)
-		if err != nil {
-			return payloads.FlagRepresentation{}, err
-		}
-		response.DefaultDisabledVariation = value
+		enabledValue, enabledErr = s.floatVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
+		disabledValue, disabledErr = s.floatVariationRepository.GetFlagVariationValue(flagKey.DefaultVariation)
 	case "bool":
-		value, err := s.boolVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
-		if err != nil {
-			return payloads.FlagRepresentation{}, err
-		}
-		response.DefaultEnabledVariation = value
-
-		value, err = s.boolVariationRepository.GetFlagVariationValue(flagKey.DefaultVariation)
-		if err != nil {
-			return payloads.FlagRepresentation{}, err
-		}
-		response.DefaultDisabledVariation = value
+		enabledValue, enabledErr = s.boolVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
+		disabledValue, disabledErr = s.boolVariationRepository.GetFlagVariationValue(flagKey.DefaultVariation)
+	case "default":
+		enabledValue, enabledErr = nil, fmt.Errorf("%s is not a valid flag type", flagKey.FlagType)
+		disabledValue, disabledErr = nil, fmt.Errorf("%s is not a valid flag type", flagKey.FlagType)
 	}
+
+	if enabledErr != nil {
+		return payloads.FlagRepresentation{}, enabledErr
+	}
+	response.DefaultEnabledVariation = enabledValue
+	if disabledErr != nil {
+		return payloads.FlagRepresentation{}, disabledErr
+	}
+	response.DefaultDisabledVariation = disabledValue
 	return response, nil
 }
 
