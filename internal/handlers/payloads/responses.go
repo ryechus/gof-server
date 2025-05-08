@@ -17,9 +17,10 @@ type FlagRepresentation struct {
 }
 
 type FlagVariationResponse struct {
-	UUID  string `json:"uuid"`
-	Name  string `json:"name"    validate:"required"`
-	Value any    `json:"value"    validate:"required"`
+	UUID     string `json:"uuid"`
+	FlagUUID string `json:"flag_uuid"`
+	Name     string `json:"name"    validate:"required"`
+	Value    any    `json:"value"    validate:"required"`
 }
 
 type FlagRuleResponse struct {

@@ -46,3 +46,10 @@ type PutRule struct {
 	Priority      int           `json:"priority"`
 	RuleContexts  []RuleContext `json:"contexts" validate:"required"`
 }
+
+type UpdateFlagVariation struct {
+	FlagKeyUUID string `json:"flag_uuid"`
+	UUID        string `json:"uuid" validate:"required"`
+
+	FlagVariation
+}

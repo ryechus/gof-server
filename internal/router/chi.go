@@ -20,6 +20,7 @@ func GetChiRouter() http.Handler {
 	chi_r.Post("/evaluateFlag/{flagKey}", handlers.EvaluateFlag)
 	chi_r.Post("/createFlag", handlers.CreateFlag)
 	chi_r.Put("/updateFlag", handlers.UpdateFlag)
+	chi_r.Put("/updateFlagVariation", handlers.UpdateFlagVariation)
 
 	// rules
 	chi_r.Put("/rule", handlers.PutRule)

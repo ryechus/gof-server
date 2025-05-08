@@ -163,3 +163,36 @@ func GetFlagVariations(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(responseJson))
 }
+
+func UpdateFlagVariation(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ctx_storage := ctx.Value(config.KeyVariable)
+	storageType := ctx_storage.(*config.FlagStorageType)
+	validate := validator.New(ValidatorConfig)
+	var input payloads.UpdateFlagVariation
+	d := json.NewDecoder(r.Body)
+
+	err := d.Decode(&input)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = validate.Struct(input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = storageType.UpdateFlagVariation(input)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(""))
+}

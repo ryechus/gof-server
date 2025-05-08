@@ -3,6 +3,7 @@ package repositories
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/placer14/gof-server/internal/database"
 	"github.com/placer14/gof-server/internal/handlers/payloads"
@@ -43,9 +44,10 @@ func (fvr *FlagVariationRepository[T]) CreateFlagKeyVariation(newFlag FlagKey, v
 		Value:       value.Value.(T),
 		Name:        value.Name,
 	}
+	now := time.Now().UTC()
 	scope := database.GetTableName(variation)(db)
-	query := fmt.Sprintf("INSERT INTO %s (uuid, flag_key_uuid, value, name) VALUES (?, ?, ?, ?)", scope.Statement.Table)
-	result := db.Raw(query, variation.UUID, variation.FlagKeyUUID, variation.Value, variation.Name).Scan(&variation)
+	query := fmt.Sprintf("INSERT INTO %s (uuid, flag_key_uuid, value, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)", scope.Statement.Table)
+	result := db.Raw(query, variation.UUID, variation.FlagKeyUUID, variation.Value, variation.Name, now, now).Scan(&variation)
 
 	log.Printf("created flag key variation %s with value %v for flag key %s\n", variationUUID, value.Value.(T), newFlag.UUID.String())
 
@@ -79,4 +81,13 @@ func (fvr *FlagVariationRepository[T]) GetFlagVariations(flagKeyUUID datatypes.U
 		return flagVariations, result.Error
 	}
 	return flagVariations, nil
+}
+
+func (fvr *FlagVariationRepository[T]) UpdateFlagVariation(flagKeyVariation database.FlagVariation[T], tx *gorm.DB) (database.FlagVariation[T], *gorm.DB) {
+	db := tx
+	now := time.Now().UTC()
+	scope := database.GetTableName(database.FlagVariation[T]{})(db)
+	query := fmt.Sprintf("UPDATE %s SET name=$1, value=$2, updated_at=$3 WHERE uuid = $4", scope.Statement.Table)
+	result := db.Raw(query, flagKeyVariation.Name, flagKeyVariation.Value, now, flagKeyVariation.UUID).Scan(&flagKeyVariation)
+	return flagKeyVariation, result
 }
