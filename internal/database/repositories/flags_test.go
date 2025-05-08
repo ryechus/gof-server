@@ -61,8 +61,8 @@ func TestCreateFlagKey(t *testing.T) {
 	defer db.Close()
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO flag_keys (uuid, name, flag_type, key, enabled) VALUES ($1, $2, $3, $4, $5)")).
-		WithArgs(sqlmock.AnyArg(), nil, "bool", "test", false).
+	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO flag_keys (uuid, name, flag_type, key, enabled, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)")).
+		WithArgs(sqlmock.AnyArg(), nil, "bool", "test", false, sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(sqlmock.NewRows([]string{}))
 
 	flagRepository := repositories.FlagRepository{DB: gormDB}

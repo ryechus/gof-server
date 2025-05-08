@@ -28,6 +28,10 @@ func TestGetFlagVariations(t *testing.T) {
 
 }
 
+func TestUpdateFlagVariation(t *testing.T) {
+
+}
+
 // func TestGetStringValueHandler(t *testing.T) {
 // 	m := storage.NewInMemoryStorage()
 // 	m.SetString("hello", "world")

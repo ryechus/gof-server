@@ -50,20 +50,21 @@ func (fr *FlagRepository) GetFlagKeyByUUID(flagUUID string) (FlagKey, *gorm.DB) 
 func (fr *FlagRepository) CreateFlagKey(flagType, key string, tx *gorm.DB) (FlagKey, *gorm.DB) {
 	db := tx
 	flag_key_uuid := datatypes.NewUUIDv4()
+	now := time.Now().UTC()
 	newFlag := database.FlagKey{
 		UUID:     flag_key_uuid,
 		FlagType: flagType,
 		Key:      key,
 		Enabled:  false,
 	}
-	query := "INSERT INTO flag_keys (uuid, name, flag_type, key, enabled) VALUES (?, ?, ?, ?, ?)"
-	result := db.Raw(query, newFlag.UUID, newFlag.Name, newFlag.FlagType, newFlag.Key, newFlag.Enabled).Scan(&newFlag)
+	query := "INSERT INTO flag_keys (uuid, name, flag_type, key, enabled, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+	result := db.Raw(query, newFlag.UUID, newFlag.Name, newFlag.FlagType, newFlag.Key, newFlag.Enabled, now, now).Scan(&newFlag)
 	return newFlag, result
 }
 
 func (fr *FlagRepository) UpdateFlagKey(flagKey *FlagKey, tx *gorm.DB) (*FlagKey, *gorm.DB) {
 	db := tx
-	now := time.Now()
+	now := time.Now().UTC()
 	query := `UPDATE flag_keys SET name=$1, description=$2 , default_variation=$3, default_enabled_variation=$4, enabled=$5, updated_at=$6 WHERE uuid = $7`
 	result := db.Raw(query, flagKey.Name, flagKey.Description, flagKey.DefaultVariation, flagKey.DefaultEnabledVariation, flagKey.Enabled, now, flagKey.UUID).Scan(&flagKey)
 
