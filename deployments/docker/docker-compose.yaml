@@ -1,0 +1,16 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:5000"
+  postgres-17:
+    image: "postgres:17"
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dbpw
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./.psql/data:/var/lib/postgresql/data
+    
