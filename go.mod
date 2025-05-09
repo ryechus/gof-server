@@ -9,7 +9,9 @@ require (
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
+	github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/containerd/containerd v1.7.18 // indirect
@@ -22,11 +24,17 @@ require (
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/go-chi/chi/v5 v5.2.1 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
+	github.com/jackc/pgx/v5 v5.5.5 // indirect
+	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
@@ -58,9 +66,14 @@ require (
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
+	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
+	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gorm.io/datatypes v1.2.5 // indirect
+	gorm.io/driver/mysql v1.5.6 // indirect
+	gorm.io/driver/postgres v1.5.11 // indirect
 	gorm.io/driver/sqlite v1.5.7 // indirect
 	gorm.io/gorm v1.25.12 // indirect
 )
