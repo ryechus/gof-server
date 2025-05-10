@@ -13,16 +13,6 @@ type EvaluationContextRepository struct {
 	DB *gorm.DB
 }
 
-//func getBucketPercentage(keyString string) float64 {
-//	h := sha256.New()
-//	h.Write([]byte(keyString))
-//	hashSum := h.Sum(nil)
-//	hashSumInt := new(big.Int).SetBytes(hashSum)
-//
-//	bucketPercentage := float64(hashSumInt.Int64()) / float64(math.MaxInt64)
-//	return bucketPercentage
-//}
-
 func (ecr *EvaluationContextRepository) CreateEvaluationContext(payload payloads.ContextEvaluation) (database.EvaluationContext, error) {
 	db := ecr.DB
 	var evaluationContext database.EvaluationContext

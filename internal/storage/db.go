@@ -1,9 +1,12 @@
 package storage
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
+	"math/big"
 
 	"github.com/google/uuid"
 	"github.com/placer14/gof-server/internal/database"
@@ -43,6 +46,76 @@ func NewDBStorage() *DBStorage {
 	}
 }
 
+func getBucketPercentage(keyString string) float64 {
+	h := sha256.New()
+	h.Write([]byte(keyString))
+	hashSum := h.Sum(nil)
+	hashSumInt := new(big.Int).SetBytes(hashSum)
+
+	bucketPercentage := float64(hashSumInt.Int64()) / float64(math.MaxInt64)
+	log.Printf("Bucket percentage: %f", bucketPercentage)
+	return math.Ceil(math.Abs(bucketPercentage) * 100)
+}
+
+func getRolloutVariant(percentage float64, rollout database.Rollout) (string, error) {
+	var rolloutConfig payloads.RolloutConfig
+	if err := json.Unmarshal([]byte(rollout.Config), &rolloutConfig); err != nil {
+		log.Println("Error unmarshalling rollout config")
+		return "", err
+	}
+
+	//sortedList := make([]payloads.RolloutVariants, len(rolloutConfig.Variants))
+	//var minPercentage int
+
+	log.Printf("rollout config variants: %v", rolloutConfig.Variants)
+	lenVariants := len(rolloutConfig.Variants)
+	for n := range lenVariants - 1 {
+		//log.Printf("%v", variant)
+		swapped := false
+		for i := range lenVariants - n - 1 {
+			if rolloutConfig.Variants[i].Percentage > rolloutConfig.Variants[i+1].Percentage {
+				rolloutConfig.Variants[i], rolloutConfig.Variants[i+1] = rolloutConfig.Variants[i+1], rolloutConfig.Variants[i]
+				swapped = true
+			}
+		}
+		if !swapped {
+			break
+		}
+	}
+
+	type bucket struct {
+		start         int
+		end           int
+		variationUUID string
+	}
+	var startingPoint int
+	var buckets []bucket
+	for idx, variant := range rolloutConfig.Variants {
+		end := variant.Percentage
+		if idx == len(rolloutConfig.Variants)-1 {
+			end = 100
+		}
+		buckets = append(buckets, bucket{
+			start:         startingPoint,
+			end:           end,
+			variationUUID: variant.VariationUUID,
+		})
+		startingPoint = variant.Percentage
+	}
+
+	log.Printf("buckets: %v", buckets)
+	for _, bucket := range buckets {
+		percentageAsInt := int(percentage)
+		if bucket.start < percentageAsInt && percentageAsInt <= bucket.end {
+			return bucket.variationUUID, nil
+		}
+	}
+
+	log.Printf("rollout config variants: %v", rolloutConfig.Variants)
+
+	return "", nil
+}
+
 func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any, error) {
 	flagKey, result := s.flagRepository.GetFlagKey(key)
 	if result.RowsAffected == 0 {
@@ -59,6 +132,7 @@ func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any
 				log.Printf("Error creating evaluation context: %s", err)
 			}
 		}()
+
 		flagRules, result := s.flagRulesRepository.GetTargetingRules(flagKey.UUID)
 		if result.RowsAffected > 0 {
 			for _, fr := range flagRules {
@@ -74,11 +148,25 @@ func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any
 				}
 			}
 		}
+		//log.Printf("Rollout variation: %s", rolloutVariant)
 	}
 
 	if contextualVariation.IsNil() {
 		contextualVariation = flagKey.DefaultVariation
-		if flagKey.Enabled {
+
+		rollout, err := s.rolloutRepository.GetRollout(flagKey.UUID)
+		if err != nil {
+			return nil, err
+		}
+		if rollout.Config != nil {
+			keyString := fmt.Sprintf("%x-%s", flagKey.UUID, payload.Context.Key)
+			bucketPercentage := getBucketPercentage(keyString)
+			rolloutVariation, err := getRolloutVariant(bucketPercentage, rollout)
+			if err != nil {
+				return nil, err
+			}
+			contextualVariation = datatypes.UUID(uuid.MustParse(rolloutVariation))
+		} else {
 			contextualVariation = flagKey.DefaultEnabledVariation
 		}
 	}
