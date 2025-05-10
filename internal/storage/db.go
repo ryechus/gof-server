@@ -4,15 +4,14 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"log"
-	"math"
-	"math/big"
-
 	"github.com/google/uuid"
 	"github.com/placer14/gof-server/internal/database"
 	"github.com/placer14/gof-server/internal/database/repositories"
 	"github.com/placer14/gof-server/internal/handlers/payloads"
+	"github.com/rs/zerolog/log"
 	"gorm.io/datatypes"
+	"math"
+	"math/big"
 )
 
 type key_db int
@@ -53,24 +52,20 @@ func getBucketPercentage(keyString string) float64 {
 	hashSumInt := new(big.Int).SetBytes(hashSum)
 
 	bucketPercentage := float64(hashSumInt.Int64()) / float64(math.MaxInt64)
-	log.Printf("Bucket percentage: %f", bucketPercentage)
-	return math.Ceil(math.Abs(bucketPercentage) * 100)
+	retVal := math.Ceil(math.Abs(bucketPercentage) * 100)
+	log.Debug().Msgf("Bucket percentage: %f", retVal)
+	return retVal
 }
 
 func getRolloutVariant(percentage float64, rollout database.Rollout) (string, error) {
 	var rolloutConfig payloads.RolloutConfig
 	if err := json.Unmarshal([]byte(rollout.Config), &rolloutConfig); err != nil {
-		log.Println("Error unmarshalling rollout config")
+		log.Error().Msg("Error unmarshalling rollout config")
 		return "", err
 	}
 
-	//sortedList := make([]payloads.RolloutVariants, len(rolloutConfig.Variants))
-	//var minPercentage int
-
-	log.Printf("rollout config variants: %v", rolloutConfig.Variants)
 	lenVariants := len(rolloutConfig.Variants)
 	for n := range lenVariants - 1 {
-		//log.Printf("%v", variant)
 		swapped := false
 		for i := range lenVariants - n - 1 {
 			if rolloutConfig.Variants[i].Percentage > rolloutConfig.Variants[i+1].Percentage {
@@ -103,7 +98,6 @@ func getRolloutVariant(percentage float64, rollout database.Rollout) (string, er
 		startingPoint = variant.Percentage
 	}
 
-	log.Printf("buckets: %v", buckets)
 	for _, bucket := range buckets {
 		percentageAsInt := int(percentage)
 		if bucket.start < percentageAsInt && percentageAsInt <= bucket.end {
@@ -111,7 +105,7 @@ func getRolloutVariant(percentage float64, rollout database.Rollout) (string, er
 		}
 	}
 
-	log.Printf("rollout config variants: %v", rolloutConfig.Variants)
+	log.Debug().Msgf("rollout config variants: %v", rolloutConfig.Variants)
 
 	return "", nil
 }
@@ -129,12 +123,13 @@ func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any
 		go func() {
 			_, err := s.evaluationContextRepository.CreateEvaluationContext(payload.Context)
 			if err != nil {
-				log.Printf("Error creating evaluation context: %s", err)
+				log.Error().Msgf("Error creating evaluation context: %s", err)
 			}
 		}()
 
 		flagRules, result := s.flagRulesRepository.GetTargetingRules(flagKey.UUID)
 		if result.RowsAffected > 0 {
+			log.Debug().Msgf("Flag rules: %v", flagRules)
 			for _, fr := range flagRules {
 				if fr.Attributes != nil {
 					var flagRuleContexts []payloads.RuleContext
@@ -148,7 +143,6 @@ func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any
 				}
 			}
 		}
-		//log.Printf("Rollout variation: %s", rolloutVariant)
 	}
 
 	if contextualVariation.IsNil() {
@@ -158,7 +152,7 @@ func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any
 		if err != nil {
 			return nil, err
 		}
-		if rollout.Config != nil {
+		if rollout.Config != nil && flagKey.Enabled {
 			keyString := fmt.Sprintf("%x-%s", flagKey.UUID, payload.Context.Key)
 			bucketPercentage := getBucketPercentage(keyString)
 			rolloutVariation, err := getRolloutVariant(bucketPercentage, rollout)
@@ -166,7 +160,7 @@ func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any
 				return nil, err
 			}
 			contextualVariation = datatypes.UUID(uuid.MustParse(rolloutVariation))
-		} else {
+		} else if flagKey.Enabled {
 			contextualVariation = flagKey.DefaultEnabledVariation
 		}
 	}
@@ -185,8 +179,6 @@ func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any
 }
 
 func (s *DBStorage) UpdateFlag(payload payloads.UpdateFlag) error {
-	log.Printf("Updating flag state for key %s to %t\n", payload.Key, payload.Enabled)
-
 	flagKey, result := s.flagRepository.GetFlagKey(payload.Key)
 
 	if result.RowsAffected == 0 {
@@ -283,7 +275,6 @@ func (s *DBStorage) PutRule(payload payloads.PutRule) error {
 }
 
 func (s *DBStorage) CreateFlag(key string, flagType string, variations []payloads.FlagVariation) error {
-	log.Printf("Setting flag value for key %s\n", key)
 	_, result := s.flagRepository.GetFlagKey(key)
 	if result.RowsAffected > 0 {
 		return fmt.Errorf("unable to create flag with key %s", key)
@@ -382,8 +373,25 @@ func (s *DBStorage) GetFlagWithVariations(key string) (payloads.FlagRepresentati
 		})
 	}
 	response.Rules = responseRules
+
+	var responseRollout payloads.FlagRolloutResponse
+	rollout, err := s.rolloutRepository.GetRollout(flagKey.UUID)
+	if err != nil {
+		return payloads.FlagRepresentation{}, nil
+	}
+	if rollout.RolloutType != "" {
+		responseRollout.RolloutType = rollout.RolloutType
+		err = json.Unmarshal(rollout.Config, &responseRollout.Config)
+		if err != nil {
+			return payloads.FlagRepresentation{}, err
+		}
+	}
+
+	response.Rollout = responseRollout
+
 	var enabledValue, disabledValue any
 	var enabledErr, disabledErr error
+
 	switch flagKey.FlagType {
 	case "string":
 		enabledValue, enabledErr = s.stringVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
@@ -410,6 +418,7 @@ func (s *DBStorage) GetFlagWithVariations(key string) (payloads.FlagRepresentati
 		return payloads.FlagRepresentation{}, disabledErr
 	}
 	response.DefaultDisabledVariation = disabledValue
+
 	return response, nil
 }
 
@@ -535,6 +544,14 @@ func (s *DBStorage) SetupRolloutRule(payload payloads.PutRolloutRule) error {
 		return fmt.Errorf("sum of variant percentages does not equal 100: %v", payload.ContextConfig.Variants)
 	}
 	_, err := s.rolloutRepository.SetupRollout(payload)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *DBStorage) DeleteRolloutRule(rolloutUUID string) error {
+	err := s.rolloutRepository.DeleteRollout(rolloutUUID)
 	if err != nil {
 		return err
 	}

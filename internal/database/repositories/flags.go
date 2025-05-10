@@ -18,7 +18,6 @@ func (fr *FlagRepository) GetFlagKey(key string) (FlagKey, *gorm.DB) {
 	var flagKey FlagKey
 	db := fr.DB
 
-	// result := db.First(&flagKey, "key = ?", key)
 	query := `
 		SELECT uuid, key, name, description, flag_type,
 			default_variation, default_enabled_variation,

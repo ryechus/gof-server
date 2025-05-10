@@ -42,3 +42,14 @@ func (rr *RolloutRepository) SetupRollout(payload payloads.PutRolloutRule) (data
 	}
 	return rollout, nil
 }
+
+func (rr *RolloutRepository) DeleteRollout(rolloutUUID string) error {
+	db := rr.DB
+	query := `DELETE FROM rollouts WHERE uuid = ?`
+	row := struct{}{}
+	result := db.Raw(query, rolloutUUID).Scan(&row)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}

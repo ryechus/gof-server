@@ -38,11 +38,20 @@ func CreateRollout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//responseJson, err := json.Marshal(scalarResponse{Value: "pong"})
-	//if err != nil {
-	//	http.Error(w, err.Error(), http.StatusBadRequest)
-	//	return
-	//}
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(""))
+}
+
+func DeleteRollout(w http.ResponseWriter, r *http.Request) {
+	rolloutUUID := r.PathValue("rolloutUUID")
+	ctx := r.Context()
+	ctxStorage := ctx.Value(config.KeyVariable)
+	storageType := ctxStorage.(*config.FlagStorageType)
+
+	err := storageType.DeleteRolloutRule(rolloutUUID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(""))
