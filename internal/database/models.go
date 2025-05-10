@@ -41,17 +41,17 @@ type TargetingRule struct {
 	UpdatedAt     time.Time
 }
 
-type TargetingRuleContext struct {
-	UUID              datatypes.UUID `gorm:"primaryKey"`
-	TargetingRuleUUID datatypes.UUID
-	ContextKind       string
-	Attribute         string
-	Operator          string
-	Value             string
+type Rollout struct {
+	UUID        datatypes.UUID `gorm:"primaryKey"`
+	FlagKeyUUID datatypes.UUID
+	RolloutType string `gorm:"not null;default:'manual_percentage'"`
+	Config      datatypes.JSON
 }
 
 type EvaluationContext struct {
-	Kind       string
+	Kind       string `gorm:"primary_key;not null;type:varchar(255)"`
+	Key        string `gorm:"primary_key;not null;type:varchar(255)"`
+	Hash       string
 	Attributes datatypes.JSON
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
@@ -89,4 +89,6 @@ func MigrateDB(db *gorm.DB) {
 	db.AutoMigrate(&FlagKeyFloatVariations{})
 	db.AutoMigrate(&FlagKeyIntVariations{})
 	db.AutoMigrate(&TargetingRule{})
+	db.AutoMigrate(&EvaluationContext{})
+	db.AutoMigrate(&Rollout{})
 }

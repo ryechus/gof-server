@@ -26,27 +26,6 @@ type EvaluateFlag struct {
 	Context ContextEvaluation `json:"context"`
 }
 
-type ContextEvaluation struct {
-	Kind       string         `json:"kind"`
-	Attributes map[string]any `json:"attributes"`
-}
-
-type RuleContext struct {
-	ContextKind string `json:"kind"`
-	Attribute   string `json:"attribute"`
-	Values      []any  `json:"values"`
-	Operator    string `json:"operator"`
-}
-
-type PutRule struct {
-	FlagUUID      string        `json:"flag_uuid"`
-	UUID          string        `json:"uuid"`
-	Name          string        `json:"name" validate:"required"`
-	VariationUUID string        `json:"variation_uuid" validate:"required"`
-	Priority      int           `json:"priority"`
-	RuleContexts  []RuleContext `json:"contexts" validate:"required"`
-}
-
 type UpdateFlagVariation struct {
 	FlagKeyUUID string `json:"flag_uuid"`
 	UUID        string `json:"uuid" validate:"required"`

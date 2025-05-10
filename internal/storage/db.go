@@ -17,12 +17,14 @@ type key_db int
 const KeyDBStorage key_db = iota
 
 type DBStorage struct {
-	flagRepository            *repositories.FlagRepository
-	boolVariationRepository   *repositories.FlagVariationRepository[bool]
-	stringVariationRepository *repositories.FlagVariationRepository[string]
-	floatVariationRepository  *repositories.FlagVariationRepository[float64]
-	intVariationRepository    *repositories.FlagVariationRepository[float64]
-	flagRulesRepository       *repositories.RuleRepository
+	flagRepository              *repositories.FlagRepository
+	boolVariationRepository     *repositories.FlagVariationRepository[bool]
+	stringVariationRepository   *repositories.FlagVariationRepository[string]
+	floatVariationRepository    *repositories.FlagVariationRepository[float64]
+	intVariationRepository      *repositories.FlagVariationRepository[float64]
+	flagRulesRepository         *repositories.RuleRepository
+	evaluationContextRepository *repositories.EvaluationContextRepository
+	rolloutRepository           *repositories.RolloutRepository
 }
 
 var _ Storageable = &DBStorage{}
@@ -30,12 +32,14 @@ var _ Storageable = &DBStorage{}
 func NewDBStorage() *DBStorage {
 	db := database.GetDB()
 	return &DBStorage{
-		flagRepository:            &repositories.FlagRepository{DB: db},
-		boolVariationRepository:   &repositories.FlagVariationRepository[bool]{DB: db},
-		stringVariationRepository: &repositories.FlagVariationRepository[string]{DB: db},
-		floatVariationRepository:  &repositories.FlagVariationRepository[float64]{DB: db},
-		intVariationRepository:    &repositories.FlagVariationRepository[float64]{DB: db},
-		flagRulesRepository:       &repositories.RuleRepository{DB: db},
+		flagRepository:              &repositories.FlagRepository{DB: db},
+		boolVariationRepository:     &repositories.FlagVariationRepository[bool]{DB: db},
+		stringVariationRepository:   &repositories.FlagVariationRepository[string]{DB: db},
+		floatVariationRepository:    &repositories.FlagVariationRepository[float64]{DB: db},
+		intVariationRepository:      &repositories.FlagVariationRepository[float64]{DB: db},
+		flagRulesRepository:         &repositories.RuleRepository{DB: db},
+		evaluationContextRepository: &repositories.EvaluationContextRepository{DB: db},
+		rolloutRepository:           &repositories.RolloutRepository{DB: db},
 	}
 }
 
@@ -49,6 +53,12 @@ func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any
 	var contextualVariation datatypes.UUID
 
 	if payload.Context.Attributes != nil && flagKey.Enabled {
+		go func() {
+			_, err := s.evaluationContextRepository.CreateEvaluationContext(payload.Context)
+			if err != nil {
+				log.Printf("Error creating evaluation context: %s", err)
+			}
+		}()
 		flagRules, result := s.flagRulesRepository.GetTargetingRules(flagKey.UUID)
 		if result.RowsAffected > 0 {
 			for _, fr := range flagRules {
@@ -414,5 +424,31 @@ func (s *DBStorage) UpdateFlagVariation(payload payloads.UpdateFlagVariation) er
 		return result.Error
 	}
 	gormTx.Commit()
+	return nil
+}
+
+func (s *DBStorage) SetupRolloutRule(payload payloads.PutRolloutRule) error {
+	if payload.UUID == "" {
+		payload.UUID = uuid.New().String()
+	}
+	var percs int
+	for _, variant := range payload.ContextConfig.Variants {
+		variationExists, err := s.verifyFlagVariationExists(payload.FlagUUID, variant.VariationUUID)
+		if err != nil {
+			return err
+		}
+		if !variationExists {
+			return fmt.Errorf("flag variation %s is not a variation of flag %s", variant.VariationUUID, payload.FlagUUID)
+		}
+		percs += variant.Percentage
+	}
+
+	if percs != 100 {
+		return fmt.Errorf("sum of variant percentages does not equal 100: %v", payload.ContextConfig.Variants)
+	}
+	_, err := s.rolloutRepository.SetupRollout(payload)
+	if err != nil {
+		return err
+	}
 	return nil
 }

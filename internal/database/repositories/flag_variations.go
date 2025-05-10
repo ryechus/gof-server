@@ -15,13 +15,6 @@ type FlagVariationRepository[T comparable] struct {
 	DB *gorm.DB
 }
 
-var _ Repository = &FlagVariationRepository[bool]{}
-
-// func (fr *FlagVariationRepository[T]) Init(db *gorm.DB) error {
-// 	fr.DB = db
-// 	return nil
-// }
-
 func (fvr *FlagVariationRepository[T]) GetFlagKeyVariationByUUID(variationUUID datatypes.UUID) (database.FlagVariation[T], error) {
 	db := fvr.DB
 	var flagVariation database.FlagVariation[T]

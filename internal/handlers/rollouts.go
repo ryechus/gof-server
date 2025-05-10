@@ -2,20 +2,20 @@ package handlers
 
 import (
 	"encoding/json"
-	"net/http"
-
 	"github.com/placer14/gof-server/internal/config"
 	"github.com/placer14/gof-server/internal/handlers/payloads"
 	"gopkg.in/go-playground/validator.v8"
+	"net/http"
 )
 
-func PutRule(w http.ResponseWriter, r *http.Request) {
+func CreateRollout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ctxStorage := ctx.Value(config.KeyVariable)
 	storageType := ctxStorage.(*config.FlagStorageType)
+
 	validate := validator.New(ValidatorConfig)
 
-	var input payloads.PutRule
+	var input payloads.PutRolloutRule
 	d := json.NewDecoder(r.Body)
 
 	err := d.Decode(&input)
@@ -31,13 +31,19 @@ func PutRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = storageType.PutRule(input)
+	err = storageType.SetupRolloutRule(input)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("content-type", "application/json")
-	w.WriteHeader(http.StatusNoContent)
+	//responseJson, err := json.Marshal(scalarResponse{Value: "pong"})
+	//if err != nil {
+	//	http.Error(w, err.Error(), http.StatusBadRequest)
+	//	return
+	//}
+
+	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(""))
 }

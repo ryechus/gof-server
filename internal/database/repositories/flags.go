@@ -12,14 +12,7 @@ type FlagRepository struct {
 	DB *gorm.DB
 }
 
-var _ Repository = &FlagRepository{}
-
 type FlagKey = database.FlagKey
-
-// func (fr *FlagRepository) Init(db *gorm.DB) error {
-// 	fr.DB = db
-// 	return nil
-// }
 
 func (fr *FlagRepository) GetFlagKey(key string) (FlagKey, *gorm.DB) {
 	var flagKey FlagKey
