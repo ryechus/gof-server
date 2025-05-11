@@ -20,7 +20,7 @@ type FlagKey struct {
 	UpdatedAt               time.Time
 }
 
-type FlagVariation[T comparable] struct {
+type FlagVariation[T any] struct {
 	UUID        datatypes.UUID `gorm:"primaryKey"`
 	FlagKeyUUID datatypes.UUID
 	Name        string
@@ -65,7 +65,9 @@ type FlagKeyFloatVariations FlagVariation[float64]
 
 type FlagKeyBoolVariations FlagVariation[bool]
 
-func GetTableName[T comparable](variation FlagVariation[T]) func(tx *gorm.DB) *gorm.DB {
+type FlagKeyJSONVariations FlagVariation[datatypes.JSON]
+
+func GetTableName[T any](variation FlagVariation[T]) func(tx *gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
 		switch any(variation).(type) {
 		case FlagVariation[string]:
@@ -76,6 +78,8 @@ func GetTableName[T comparable](variation FlagVariation[T]) func(tx *gorm.DB) *g
 			return tx.Table("flag_key_float_variations")
 		case FlagVariation[bool]:
 			return tx.Table("flag_key_bool_variations")
+		case FlagVariation[datatypes.JSON]:
+			return tx.Table("flag_key_json_variations")
 		default:
 			panic("no matching table for datatype; can't save to database")
 		}
@@ -88,6 +92,7 @@ func MigrateDB(db *gorm.DB) {
 	db.AutoMigrate(&FlagKeyBoolVariations{})
 	db.AutoMigrate(&FlagKeyFloatVariations{})
 	db.AutoMigrate(&FlagKeyIntVariations{})
+	db.AutoMigrate(&FlagKeyJSONVariations{})
 	db.AutoMigrate(&TargetingRule{})
 	db.AutoMigrate(&EvaluationContext{})
 	db.AutoMigrate(&Rollout{})

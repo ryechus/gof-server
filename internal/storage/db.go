@@ -24,6 +24,7 @@ type DBStorage struct {
 	stringVariationRepository   *repositories.FlagVariationRepository[string]
 	floatVariationRepository    *repositories.FlagVariationRepository[float64]
 	intVariationRepository      *repositories.FlagVariationRepository[float64]
+	jsonVariationRepository     *repositories.FlagVariationRepository[datatypes.JSON]
 	flagRulesRepository         *repositories.RuleRepository
 	evaluationContextRepository *repositories.EvaluationContextRepository
 	rolloutRepository           *repositories.RolloutRepository
@@ -42,6 +43,7 @@ func NewDBStorage() *DBStorage {
 		flagRulesRepository:         &repositories.RuleRepository{DB: db},
 		evaluationContextRepository: &repositories.EvaluationContextRepository{DB: db},
 		rolloutRepository:           &repositories.RolloutRepository{DB: db},
+		jsonVariationRepository:     &repositories.FlagVariationRepository[datatypes.JSON]{DB: db},
 	}
 }
 
@@ -152,7 +154,7 @@ func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any
 		if err != nil {
 			return nil, err
 		}
-		if rollout.Config != nil && flagKey.Enabled {
+		if rollout.Config != nil && flagKey.Enabled && payload.Context.Key != "" {
 			keyString := fmt.Sprintf("%x-%s", flagKey.UUID, payload.Context.Key)
 			bucketPercentage := getBucketPercentage(keyString)
 			rolloutVariation, err := getRolloutVariant(bucketPercentage, rollout)
@@ -174,6 +176,8 @@ func (s *DBStorage) EvaluateFlag(key string, payload payloads.EvaluateFlag) (any
 		value, _err = s.floatVariationRepository.GetFlagVariationValue(contextualVariation)
 	case "bool":
 		value, _err = s.boolVariationRepository.GetFlagVariationValue(contextualVariation)
+	case "json", "object":
+		value, _err = s.jsonVariationRepository.GetFlagVariationValue(contextualVariation)
 	}
 	return value, _err
 }
@@ -322,6 +326,18 @@ func (s *DBStorage) CreateFlag(key string, flagType string, variations []payload
 				return result.Error
 			}
 			uuids = append(uuids, flagVariation.UUID)
+		case "json", "object":
+			v, err := json.Marshal(value.Value)
+			value.Value = datatypes.JSON(v)
+			if err != nil {
+				return err
+			}
+			flagVariation, result := s.jsonVariationRepository.CreateFlagKeyVariation(flagKey, value, gormTx)
+			if result.Error != nil {
+				gormTx.Rollback()
+				return result.Error
+			}
+			uuids = append(uuids, flagVariation.UUID)
 		}
 	}
 
@@ -405,7 +421,10 @@ func (s *DBStorage) GetFlagWithVariations(key string) (payloads.FlagRepresentati
 	case "bool":
 		enabledValue, enabledErr = s.boolVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
 		disabledValue, disabledErr = s.boolVariationRepository.GetFlagVariationValue(flagKey.DefaultVariation)
-	case "default":
+	case "json", "object":
+		enabledValue, enabledErr = s.jsonVariationRepository.GetFlagVariationValue(flagKey.DefaultEnabledVariation)
+		disabledValue, disabledErr = s.jsonVariationRepository.GetFlagVariationValue(flagKey.DefaultVariation)
+	default:
 		enabledValue, enabledErr = nil, fmt.Errorf("%s is not a valid flag type", flagKey.FlagType)
 		disabledValue, disabledErr = nil, fmt.Errorf("%s is not a valid flag type", flagKey.FlagType)
 	}
@@ -468,6 +487,21 @@ func (s *DBStorage) GetFlagVariations(key string) ([]payloads.FlagVariationRespo
 		if err != nil {
 			return []payloads.FlagVariationResponse{}, err
 		}
+	case "json", "object":
+		variations, err := s.jsonVariationRepository.GetFlagVariations(flagKey.UUID)
+		for _, variation := range variations {
+			response = append(response, payloads.FlagVariationResponse{
+				UUID:     variation.UUID.String(),
+				FlagUUID: variation.FlagKeyUUID.String(),
+				Name:     variation.Name,
+				Value:    variation.Value,
+			})
+		}
+		if err != nil {
+			return []payloads.FlagVariationResponse{}, err
+		}
+	default:
+		return []payloads.FlagVariationResponse{}, fmt.Errorf("%s is not a valid flag key", flagKey.FlagType)
 	}
 	return response, nil
 }
