@@ -11,5 +11,5 @@ build-docker:
 	docker build -t ${SERVICE_NAME}:latest --build-arg SERVICE_NAME="${SERVICE_NAME}" -f ./deployments/docker/Dockerfile .
 
 .PHONY: test-integration
-test-integration: build-docker
+test-integration:
 	go test -v -timeout=10s ./...
