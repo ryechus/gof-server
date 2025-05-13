@@ -3,17 +3,18 @@ package payloads
 import "time"
 
 type FlagRepresentation struct {
-	FlagUUID                 string             `json:"flag_uuid"`
-	Key                      string             `json:"key"`
-	Name                     string             `json:"name"`
-	Description              string             `json:"description"`
-	FlagType                 string             `json:"flag_type"`
-	Enabled                  bool               `json:"enabled"`
-	DefaultEnabledVariation  any                `json:"default_enabled"`
-	DefaultDisabledVariation any                `json:"default_disabled"`
-	Rules                    []FlagRuleResponse `json:"rules"`
-	CreatedAt                time.Time          `json:"created_at"`
-	UpdatedAt                time.Time          `json:"updated_at"`
+	FlagUUID                 string              `json:"flag_uuid"`
+	Key                      string              `json:"key"`
+	Name                     string              `json:"name"`
+	Description              string              `json:"description"`
+	FlagType                 string              `json:"flag_type"`
+	Enabled                  bool                `json:"enabled"`
+	DefaultEnabledVariation  any                 `json:"default_enabled"`
+	DefaultDisabledVariation any                 `json:"default_disabled"`
+	Rules                    []FlagRuleResponse  `json:"rules"`
+	Rollout                  FlagRolloutResponse `json:"rollout"`
+	CreatedAt                time.Time           `json:"created_at"`
+	UpdatedAt                time.Time           `json:"updated_at"`
 }
 
 type FlagVariationResponse struct {
@@ -30,4 +31,9 @@ type FlagRuleResponse struct {
 	VariationUUID string `json:"variation_uuid"`
 	Priority      int    `json:"priority"`
 	RuleContexts  any    `json:"contexts"`
+}
+
+type FlagRolloutResponse struct {
+	RolloutType string         `json:"rollout_type"`
+	Config      map[string]any `json:"config"`
 }

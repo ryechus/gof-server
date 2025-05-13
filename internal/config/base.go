@@ -1,6 +1,8 @@
 package config
 
-import "github.com/placer14/gof-server/internal/storage"
+import (
+	"github.com/placer14/gof-server/internal/storage"
+)
 
 var FlagStorageIface storage.Storageable = storage.NewDBStorage()
 

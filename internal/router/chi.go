@@ -28,5 +28,8 @@ func GetChiRouter() http.Handler {
 	// variations
 	chi_r.Get("/getVariations/{flagKey}", handlers.GetFlagVariations)
 
+	chi_r.Put("/rollout", handlers.CreateRollout)
+	chi_r.Delete("/rollout/{rolloutUUID}", handlers.DeleteRollout)
+
 	return chi_r
 }

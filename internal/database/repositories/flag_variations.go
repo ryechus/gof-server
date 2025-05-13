@@ -11,16 +11,9 @@ import (
 	"gorm.io/gorm"
 )
 
-type FlagVariationRepository[T comparable] struct {
+type FlagVariationRepository[T any] struct {
 	DB *gorm.DB
 }
-
-var _ Repository = &FlagVariationRepository[bool]{}
-
-// func (fr *FlagVariationRepository[T]) Init(db *gorm.DB) error {
-// 	fr.DB = db
-// 	return nil
-// }
 
 func (fvr *FlagVariationRepository[T]) GetFlagKeyVariationByUUID(variationUUID datatypes.UUID) (database.FlagVariation[T], error) {
 	db := fvr.DB
@@ -38,10 +31,14 @@ func (fvr *FlagVariationRepository[T]) GetFlagKeyVariationByUUID(variationUUID d
 func (fvr *FlagVariationRepository[T]) CreateFlagKeyVariation(newFlag FlagKey, value payloads.FlagVariation, tx *gorm.DB) (database.FlagVariation[T], *gorm.DB) {
 	db := tx
 	variationUUID := datatypes.NewUUIDv4()
+	castedValue, _ := value.Value.(T)
+	//if !ok {
+	//	log.Panicf("%+v is not of type %s", value.Value, newFlag.FlagType)
+	//}
 	variation := database.FlagVariation[T]{
 		UUID:        variationUUID,
 		FlagKeyUUID: newFlag.UUID,
-		Value:       value.Value.(T),
+		Value:       castedValue,
 		Name:        value.Name,
 	}
 	now := time.Now().UTC()
